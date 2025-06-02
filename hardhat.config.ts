@@ -51,6 +51,22 @@ task("update-signer", "Update the trusted signer address for the paymaster")
     await updateSigner.main(hre, taskArgs.address);
   });
 
+// Task to update the gas limit
+task("update-gas-limit", "Update the maximum allowed gas cost for the paymaster")
+  .addParam("limit", "The new gas limit in ETH (e.g., '0.02')")
+  .setAction(async (taskArgs, hre) => {
+    const updateGasLimit = require("./scripts/tasks/update-gas-limit");
+    await updateGasLimit.main(hre, taskArgs.limit);
+  });
+
+// Task to reinitialize gas cost after upgrade
+task("reinitialize-gas-cost", "Reinitialize gas cost after upgrade if it was reset to zero")
+  .addOptionalParam("limit", "The gas limit in ETH", "0.01")
+  .setAction(async (taskArgs, hre) => {
+    const reinitializeGasCost = require("./scripts/tasks/reinitialize-gas-cost");
+    await reinitializeGasCost.main(hre, taskArgs.limit);
+  });
+
 task("verify-source", "Verify the paymaster implementation and proxy contracts on Etherscan")
   .setAction(async (taskArgs, hre) => {
     const verifySource = require("./scripts/tasks/verify-source");

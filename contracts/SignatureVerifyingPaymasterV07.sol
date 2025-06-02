@@ -185,6 +185,35 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
     }
 
     /**
+     * @dev Returns the EIP712 domain name
+     * @return The domain name used for EIP712 signing
+     */
+    function getDomainName() public pure returns (string memory) {
+        return DOMAIN_NAME;
+    }
+
+    /**
+     * @dev Returns the EIP712 domain version
+     * @return The domain version used for EIP712 signing
+     */
+    function getDomainVersion() public pure returns (string memory) {
+        return DOMAIN_VERSION;
+    }
+
+    /**
+     * @dev Emergency function to reinitialize gas cost limit after upgrade if needed
+     * @param _maxAllowedGasCost The gas cost limit to set
+     */
+    function reinitializeGasCost(uint256 _maxAllowedGasCost) external onlyOwner {
+        require(maxAllowedGasCost == 0, "Gas cost already initialized");
+        require(_maxAllowedGasCost > 0, "Gas cost limit cannot be zero");
+        require(_maxAllowedGasCost <= 1 ether, "Gas cost limit too high");
+        
+        maxAllowedGasCost = _maxAllowedGasCost;
+        emit MaxAllowedGasCostUpdated(0, _maxAllowedGasCost);
+    }
+
+    /**
      * @dev Packs validation timestamps and signature status into the format 
      * expected by the EntryPoint contract
      * 

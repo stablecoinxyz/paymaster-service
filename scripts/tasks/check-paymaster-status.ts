@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { formatEther, getAddress, Address, getContract, http, createPublicClient } from 'viem';
+import { formatEther, getAddress, Address, getContract, http, createPublicClient, Hex } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
 import { ENTRYPOINT_V07_ABI } from "../../src/helpers/abi";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
@@ -46,10 +46,11 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
     const implementationAddress = getAddress('0x' + (implAddressData?.slice(26) || ''));
     
     // Get contract information
-    const [owner, entryPoint, verifier] = await Promise.all([
+    const [owner, entryPoint, verifier, maxGasCost] = await Promise.all([
       paymaster.read.owner([]) as Promise<Address>,
       paymaster.read.entryPoint([]) as Promise<Address>,
-      paymaster.read.verifyingSigner([]) as Promise<Address>
+      paymaster.read.verifyingSigner([]) as Promise<Address>,
+      paymaster.read.maxAllowedGasCost([]) as Promise<bigint>
     ]);
 
     // Get balance information
@@ -65,12 +66,23 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
     console.log(`Owner: ${owner}`);
     console.log(`EntryPoint: ${entryPoint}`);
     console.log(`Verifying Signer: ${verifier}`);
+    console.log(`Max Allowed Gas Cost: ${formatEther(maxGasCost)} ETH`);
     console.log(`\nPaymaster ETH balance: ${formatEther(paymasterBalance)} ETH`);
 
     // Check if the contract has any version information
     try {
-      const version = await paymaster.read.VERSION();
+      const [version, domainSeparator, domainName, domainVersion] = await Promise.all([
+        paymaster.read.VERSION(),
+        paymaster.read.domainSeparator(),
+        paymaster.read.getDomainName(),
+        paymaster.read.getDomainVersion()
+      ]);
+      
       console.log(`\nContract version: ${version}`);
+      console.log(`\nEIP712 Information:`);
+      console.log(`Domain Name: ${domainName}`);
+      console.log(`Domain Version: ${domainVersion}`);
+      console.log(`Domain Separator: ${domainSeparator}`);
     } catch (error) {
       console.log('\nContract version: Not available (V1)');
     }

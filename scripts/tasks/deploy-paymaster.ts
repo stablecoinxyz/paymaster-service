@@ -63,7 +63,7 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
 
   // Get contract artifacts directly
   const paymasterArtifact = await hre.artifacts.readArtifact('SignatureVerifyingPaymasterV07');
-  const proxyArtifact = await hre.artifacts.readArtifact('ERC1967Proxy');
+  const proxyArtifact = await hre.artifacts.readArtifact('@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy');
   
   // Deploy the implementation contract first
   console.log("Preparing deterministic implementation deployment...");
@@ -167,6 +167,9 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
 
     implementationAddress = computedAddress; 
     console.log(`\nImplementation deployed successfully to: ${implementationAddress}`);
+
+    // Sleep for 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Verify the implementation has code
     const implCode = await publicClient.getBytecode({ address: implementationAddress });
@@ -326,25 +329,61 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   const paymasterArtifact = await hre.artifacts.readArtifact('SignatureVerifyingPaymasterV07');
   console.log("Preparing deterministic deployment...");
   
-  // Create a unique salt based on the contract name and version
-  const SALT = createSaltWithVersion('implementation', version);
+  // Start with version 1 for upgrades 
+  let upgradeVersion = '1';
   
   // Prepare the init code (contract bytecode + constructor args)
+  const constructorArgs = encodeAbiParameters(
+    [{ type: 'address' }],
+    [ENTRY_POINT_V07_ADDRESS]
+  );
+  
   const initCode = concat([
     paymasterArtifact.bytecode as Hex,
-    encodeAbiParameters(
-      [{ type: 'address' }],
-      [ENTRY_POINT_V07_ADDRESS]
-    )
+    constructorArgs
   ]);
 
-  // Compute the deterministic address that will be created
-  const computedAddress = getCreate2Address({
+  // Find an unused version/address
+  let SALT = createSaltWithVersion('implementation', upgradeVersion);
+  let computedAddress = getCreate2Address({
     from: CREATE2_FACTORY,
     salt: SALT,
     bytecode: initCode
   });
   
+  console.log(`Checking for unused implementation address...`);
+  
+  // Check if there's already code at the computed address and find unused version
+  const existingCode = await publicClient.getBytecode({ address: computedAddress });
+  if (existingCode) {
+    console.log(`Implementation address ${computedAddress} already used, finding next available...`);
+    
+    // Try versions until we find an unused address
+    let versionNum = 2;
+    while (versionNum <= 20) { // Allow more attempts for upgrades
+      upgradeVersion = versionNum.toString();
+      SALT = createSaltWithVersion('implementation', upgradeVersion);
+      computedAddress = getCreate2Address({
+        from: CREATE2_FACTORY,
+        salt: SALT,
+        bytecode: initCode
+      });
+      
+      const code = await publicClient.getBytecode({ address: computedAddress });
+      if (!code) {
+        console.log(`Found unused address with version ${upgradeVersion}: ${computedAddress}`);
+        break;
+      }
+      console.log(`Version ${upgradeVersion} already used (${computedAddress}), trying next...`);
+      versionNum++;
+    }
+    
+    if (versionNum > 20) {
+      throw new Error("Could not find unused version after 20 attempts");
+    }
+  }
+  
+  console.log(`Using version ${upgradeVersion} for upgrade`);
   console.log(`Computed deterministic address: ${computedAddress}`);
 
   // Format the call data for the CREATE2 factory
@@ -361,17 +400,28 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   });
 
   // Wait for deployment transaction
+  console.log(`Waiting for implementation deployment transaction: ${implementationDeployTx}`);
   const implementationReceipt = await publicClient.waitForTransactionReceipt({
     hash: implementationDeployTx,
     timeout: 60_000
   });
   
   if (implementationReceipt.status === 'reverted') {
-    throw new Error("Implementation deployment failed");
+    throw new Error("Implementation deployment failed - transaction reverted");
   }
   
   const implementationAddress = computedAddress;
   console.log(`New implementation deployed to: ${implementationAddress}`);
+  
+  // Sleep for 5 seconds to let the deployment settle
+  await new Promise(resolve => setTimeout(resolve, 5000));
+  
+  // Verify the implementation has code
+  const implCode = await publicClient.getBytecode({ address: implementationAddress });
+  if (!implCode) {
+    throw new Error("Implementation deployment failed - no code at deployed address");
+  }
+  console.log(`Implementation code size: ${implCode.length}`);
   
   // Upgrade the proxy by calling upgradeToAndCall
   console.log("Upgrading proxy implementation...");
@@ -398,6 +448,7 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   });
   
   // Wait for upgrade transaction
+  console.log(`Waiting for upgrade transaction: ${upgradeTx}`);
   const upgradeReceipt = await publicClient.waitForTransactionReceipt({
     hash: upgradeTx,
     timeout: 60_000
@@ -406,6 +457,11 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   if (upgradeReceipt.status === 'reverted') {
     throw new Error("Upgrade transaction reverted");
   }
+  
+  console.log("Upgrade transaction completed successfully!");
+  
+  // Sleep for 5 seconds to let the upgrade settle
+  await new Promise(resolve => setTimeout(resolve, 5000));
   
   // Verify the new implementation address
   const newImplAddressData = await publicClient.getStorageAt({
@@ -421,6 +477,8 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   }
 
   console.log("Upgrade completed successfully!");
+  console.log(`Old implementation: ${currentImpl}`);
+  console.log(`New implementation: ${newImpl}`);
 }
 
 // Helper function to check if an address is valid

@@ -47,6 +47,7 @@ scripts/
 │   ├── check-paymaster-status.ts
 │   ├── deploy-paymaster.ts
 │   ├── deposit-funds.ts
+│   ├── update-gas-limit.ts
 │   ├── update-signer.ts
 │   ├── verify-source.ts
 │   └── withdraw-funds.ts
@@ -78,8 +79,10 @@ This will show:
 - Owner address
 - EntryPoint address
 - Trusted signer
+- **Max Allowed Gas Cost** *(new)*
 - Current Deposit in EntryPoint
 - Contract version
+- **EIP712 Domain Separator** *(new)*
 
 Example output:
 
@@ -88,10 +91,12 @@ Implementation address: 0x9a1a3a87aa6E40CBc20955E02479dD8f654cD073
 Owner: 0x124b082e8DF36258198da4Caa3B39c7dFa64D9cE
 EntryPoint: 0x0000000071727De22E5E9d8BAf0edAc6f37da032
 Verifying Signer: 0xbb46C0C1792d7b606Db07cead656efd93b433222
+Max Allowed Gas Cost: 0.01 ETH
 
 Paymaster ETH balance: 0.01 ETH
 
-Contract version: 2
+Contract version: 4
+EIP712 Domain Separator: 0x1234...abcd
 ```
 
 ### Funding the Paymaster
@@ -135,6 +140,18 @@ To change the address authorized to sign paymaster approvals:
 ```bash
 npx hardhat update-signer --address 0xNewSignerAddress --network <your-network>
 ```
+
+### Updating the Gas Limit *(new)*
+
+To change the maximum allowed gas cost the paymaster will sponsor:
+
+```bash
+npx hardhat update-gas-limit --limit 0.02 --network <your-network>
+```
+
+This sets the maximum gas cost to 0.02 ETH. The paymaster will reject any UserOperations that would cost more than this limit.
+
+Valid range: 0.001 ETH to 1.0 ETH
 
 ### Upgrading the implementation
 
