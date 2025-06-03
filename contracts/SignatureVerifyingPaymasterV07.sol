@@ -30,11 +30,11 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
     // Maximum gas cost the paymaster is willing to cover (in wei)
     uint256 public maxAllowedGasCost;
 
-    uint256 public constant VERSION = 4;
+    uint256 public constant VERSION = 5;
 
     // EIP712 Domain
     string private constant DOMAIN_NAME = "SignatureVerifyingPaymaster";
-    string private constant DOMAIN_VERSION = "4";
+    string private constant DOMAIN_VERSION = "5";
     
     // EIP712 TypeHash for the PaymasterData struct
     bytes32 private constant PAYMASTER_DATA_TYPEHASH = keccak256(

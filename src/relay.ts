@@ -39,21 +39,13 @@ import {
 } from "../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 // Constants
-const PAYMASTER_VERSION = "4";
+const PAYMASTER_VERSION = "5";
 
 /**
- * Generate EIP712 signature for paymaster validation
- * @param paymasterAddress The paymaster contract address
- * @param trustedSignerWalletClient The wallet client of the trusted signer
- * @param validUntil The timestamp until which the signature is valid
- * @param validAfter The timestamp after which the signature is valid
- * @param senderAddress The address of the user operation sender
- * @param nonce The nonce from the user operation
- * @param calldataHash The hash of the user operation calldata
- * @returns The EIP712 signature
+ * Generate EIP712 signature for paymaster data
  */
-const generateEIP712Signature = async (
-  trustedSignerWalletClient: WalletClient<Transport, Chain, Account>,
+const generatePaymasterSignature = async (
+  walletClient: WalletClient<Transport, Chain, Account>,
   paymasterAddress: Hex,
   validUntil: number,
   validAfter: number,
@@ -61,15 +53,14 @@ const generateEIP712Signature = async (
   nonce: bigint,
   calldataHash: Hex
 ): Promise<Hex> => {
-  const chainId = await trustedSignerWalletClient.getChainId();
+  const chainId = await walletClient.getChainId();
   
-  // Sign using EIP712 structured signing
-  const signature = await trustedSignerWalletClient.signTypedData({
+  return await walletClient.signTypedData({
     domain: {
       name: "SignatureVerifyingPaymaster",
       version: PAYMASTER_VERSION,
-      chainId: Number(chainId),
-      verifyingContract: paymasterAddress,
+      chainId: chainId,
+      verifyingContract: paymasterAddress
     },
     types: {
       PaymasterData: [
@@ -77,7 +68,7 @@ const generateEIP712Signature = async (
         { name: "validAfter", type: "uint48" },
         { name: "sender", type: "address" },
         { name: "nonce", type: "uint256" },
-        { name: "calldataHash", type: "bytes32" },
+        { name: "calldataHash", type: "bytes32" }
       ]
     },
     primaryType: "PaymasterData",
@@ -86,11 +77,9 @@ const generateEIP712Signature = async (
       validAfter: validAfter,
       sender: senderAddress,
       nonce: nonce,
-      calldataHash: calldataHash,
+      calldataHash: calldataHash
     }
   });
-  
-  return signature;
 };
 
 /**
@@ -144,7 +133,7 @@ const handleSbcMethodV07 = async (
     const calldataHash = keccak256(hexToBytes(userOperation.callData));
 
     // Generate EIP712 signature
-    const signature = await generateEIP712Signature(
+    const signature = await generatePaymasterSignature(
       trustedSignerWalletClient,
       paymasterV07.address,
       validUntil,
@@ -153,10 +142,10 @@ const handleSbcMethodV07 = async (
       userOperation.nonce,
       calldataHash
     );
-    
+
     // Construct paymasterData
     const paymasterData = createPaymasterData(validUntil, validAfter, signature);
-    
+
     if (estimateGas) {
       // For gas estimation
       let op = {
@@ -238,7 +227,7 @@ const handleSbcMethod = async (
       );
     }
 
-    const [, entryPoint] = params.data;
+    const [userOperation, entryPoint] = params.data;
 
     if (entryPoint !== ENTRYPOINT_ADDRESS_V07) {
       throw new RpcError(
@@ -248,31 +237,25 @@ const handleSbcMethod = async (
     }
   
     try {
-      // Prepare timestamps
       const currentTimestamp = Math.floor(Date.now() / 1000);
-      const validAfter = currentTimestamp;
+      const validAfter = currentTimestamp - 10; // 10 seconds before current timestamp
       const validUntil = currentTimestamp + 3600; // 1 hour validity
       
-      // For stub data, we use placeholder values since we don't know the actual UserOperation yet
-      const zeroAddress = "0x0000000000000000000000000000000000000000" as Hex;
-      const placeholderNonce = 0n; // Placeholder nonce for stub data
-      const placeholderCalldataHash = "0x0000000000000000000000000000000000000000000000000000000000000000" as Hex; // Placeholder calldata hash
-      
-      // Generate EIP712 signature using placeholder values
-      const signature = await generateEIP712Signature(
+      const senderAddress = userOperation.sender;
+      const calldataHash = keccak256(hexToBytes(userOperation.callData));
+
+      const signature = await generatePaymasterSignature(
         trustedSignerWalletClient,
         paymasterV07.address,
         validUntil,
         validAfter,
-        zeroAddress,
-        placeholderNonce,
-        placeholderCalldataHash
+        senderAddress,
+        userOperation.nonce,
+        calldataHash
       );
       
-      // Create paymasterData with formatted timestamps
       const paymasterData = createPaymasterData(validUntil, validAfter, signature);
       
-      // Return with gas limits
       return {
         paymasterData: paymasterData,
         paymasterVerificationGasLimit: toHex(100_000n),
