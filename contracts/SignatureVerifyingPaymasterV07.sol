@@ -34,7 +34,10 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
 
     // EIP712 Domain
     string private constant DOMAIN_NAME = "SignatureVerifyingPaymaster";
-    string private constant DOMAIN_VERSION = "5";
+    string private constant DOMAIN_VERSION = "1";
+    bytes32 private constant PAYMASTER_DATA_TYPEHASH = keccak256(
+        "PaymasterData(uint48 validUntil,uint48 validAfter,address sender,uint256 nonce,bytes32 calldataHash)"
+    );
     
     error InvalidSignatureLength(uint256 length);
     error SignerMismatch(address recovered, address expected);
@@ -147,7 +150,7 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
      * 
      * @param validUntil Timestamp after which the signature expires
      * @param validAfter Timestamp before which the signature is not valid
-     * @param senderAddress The address of the sender initiating the UserOperation
+     * @param sender The address of the sender initiating the UserOperation
      * @param nonce The nonce from the UserOperation to prevent replay attacks
      * @param calldataHash Hash of the UserOperation calldata to tie signature to specific transaction
      * @return bytes32 The EIP-712 compliant hash of the PaymasterData, incorporating the domain separator.
@@ -155,17 +158,19 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
     function getHash(
         uint48 validUntil,
         uint48 validAfter,
-        address senderAddress,
+        address sender,
         uint256 nonce,
         bytes32 calldataHash
     ) public view returns (bytes32) {
         bytes32 structHash = keccak256(abi.encode(
+            PAYMASTER_DATA_TYPEHASH,
             validUntil,
             validAfter,
-            senderAddress,
+            sender,
             nonce,
             calldataHash
         ));
+
         return _hashTypedDataV4(structHash);
     }
 
