@@ -5,6 +5,7 @@ pnpm-lock.yaml
 node_modules/
 artifacts/
 cache/
+lib/
 
 # dependencies
 /node_modules

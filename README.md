@@ -1,63 +1,66 @@
-# paymaster-service
+## Foundry
 
-A paymaster service that lets you use a custom paymaster contract. The service is built using Fastify, deployed to Railway.
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-Currently, the service supports v0.7 of the Account Abstraction standard. The paymaster smart contract is deployed using CREATE2 on:
+Foundry consists of:
 
-- Base Sepolia
-- Base Mainnet
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-The [admin scripts](ADMIN-README.md) are capable of deploying the paymaster contract to other EVM-compatible chains.
+## Documentation
 
-For more details on individual releases, see the [CHANGELOG.md](CHANGELOG.md) file.
+https://book.getfoundry.sh/
 
-## Environment Variables
+## Usage
 
-To run this project, you will need to add the following environment variables to your .env file. Run `cp .env.example .env` to create it.
+### Build
 
-```bash
-ENTRY_POINT_V07_ADDRESS=""
-
-BASE_SEPOLIA_RPC_URL=""
-BASE_RPC_URL=""
-
-BASE_SEPOLIA_BUNDLER_URL=""
-BASE_BUNDLER_URL=""
-
-BASESCAN_API_KEY=""
-
-# Proxy address of the Paymaster (from the initial deployment)
-PROXY_ADDRESS=""
-
-# Deployer wallet private key
-DEPLOYER_PRIVATE_KEY="0x..."
-
-# Trusted signer wallet address
-TRUSTED_SIGNER="0x..."
-# Trusted signer wallet private key
-TRUSTED_SIGNER_PRIVATE_KEY="0x..."
+```shell
+$ forge build
 ```
 
-## Compile the paymaster contract
+### Test
 
-When you first clone the repository (or change the paymaster contract), you will need to (re)compile the paymaster contract and copy the ABI and bytecode to the `src/contracts/abi` subdirectory (using the `npm run copy` command).
-
-```bash
-npm run copy
+```shell
+$ forge test
 ```
 
-## Admin Tasks
+### Format
 
-For details on the admin tasks, such as deploying, upgrading, funding the paymaster, etc., see the [ADMIN-README.md](ADMIN-README.md) file.
-
-## Run locally for development
-
-Running the project locally is done by running the following command. The paymaster service will be available at `https://localhost:3000`.
-
-```bash
-npm run start
+```shell
+$ forge fmt
 ```
 
-## Author
+### Gas Snapshots
 
-- Eric Tsang [@Ectsang](https://www.github.com/Ectsang)
+```shell
+$ forge snapshot
+```
+
+### Anvil
+
+```shell
+$ anvil
+```
+
+### Deploy
+
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+### Cast
+
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
