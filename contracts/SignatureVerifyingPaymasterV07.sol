@@ -30,17 +30,12 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
     // Maximum gas cost the paymaster is willing to cover (in wei)
     uint256 public maxAllowedGasCost;
 
-    uint256 public constant VERSION = 5;
+    uint256 public constant VERSION = 1;
 
     // EIP712 Domain
     string private constant DOMAIN_NAME = "SignatureVerifyingPaymaster";
     string private constant DOMAIN_VERSION = "5";
     
-    // EIP712 TypeHash for the PaymasterData struct
-    bytes32 private constant PAYMASTER_DATA_TYPEHASH = keccak256(
-        "PaymasterData(uint48 validUntil,uint48 validAfter,address sender,uint256 nonce,bytes32 calldataHash)"
-    );
-
     error InvalidSignatureLength(uint256 length);
     error SignerMismatch(address recovered, address expected);
     error InvalidPaymasterData();
@@ -155,7 +150,7 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
      * @param senderAddress The address of the sender initiating the UserOperation
      * @param nonce The nonce from the UserOperation to prevent replay attacks
      * @param calldataHash Hash of the UserOperation calldata to tie signature to specific transaction
-     * @return A bytes32 hash that should be signed by the verifyingSigner
+     * @return bytes32 The EIP-712 compliant hash of the PaymasterData, incorporating the domain separator.
      */
     function getHash(
         uint48 validUntil,
@@ -165,14 +160,12 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
         bytes32 calldataHash
     ) public view returns (bytes32) {
         bytes32 structHash = keccak256(abi.encode(
-            PAYMASTER_DATA_TYPEHASH,
             validUntil,
             validAfter,
             senderAddress,
             nonce,
             calldataHash
         ));
-        
         return _hashTypedDataV4(structHash);
     }
 
@@ -185,42 +178,13 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
     }
 
     /**
-     * @dev Returns the EIP712 domain name
-     * @return The domain name used for EIP712 signing
-     */
-    function getDomainName() public pure returns (string memory) {
-        return DOMAIN_NAME;
-    }
-
-    /**
-     * @dev Returns the EIP712 domain version
-     * @return The domain version used for EIP712 signing
-     */
-    function getDomainVersion() public pure returns (string memory) {
-        return DOMAIN_VERSION;
-    }
-
-    /**
-     * @dev Emergency function to reinitialize gas cost limit after upgrade if needed
-     * @param _maxAllowedGasCost The gas cost limit to set
-     */
-    function reinitializeGasCost(uint256 _maxAllowedGasCost) external onlyOwner {
-        require(maxAllowedGasCost == 0, "Gas cost already initialized");
-        require(_maxAllowedGasCost > 0, "Gas cost limit cannot be zero");
-        require(_maxAllowedGasCost <= 1 ether, "Gas cost limit too high");
-        
-        maxAllowedGasCost = _maxAllowedGasCost;
-        emit MaxAllowedGasCostUpdated(0, _maxAllowedGasCost);
-    }
-
-    /**
      * @dev Packs validation timestamps and signature status into the format 
      * expected by the EntryPoint contract
      * 
      * @param sigFailed True if signature validation failed
      * @param validUntil Timestamp until which the signature is valid
      * @param validAfter Timestamp after which the signature is valid
-     * @return packed A uint256 containing all validation data
+     * @return packed uint256 containing all validation data
      */
     function _packValidationData(
         bool sigFailed,
@@ -249,6 +213,11 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
         bytes32 userOpHash,
         uint256 maxCost
     ) internal virtual override returns (bytes memory context, uint256 validationData) {
+        // Validate gas cost doesn't exceed maximum allowed
+        if (maxCost > maxAllowedGasCost) {
+            revert GasCostTooHigh(maxCost, maxAllowedGasCost);
+        }
+
         // Extract timestamps and signature from paymaster data
         bytes calldata paymasterData = userOp.paymasterAndData[UserOperationLib.PAYMASTER_DATA_OFFSET:]; 
         
@@ -268,11 +237,6 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
         // Recover signer address from EIP712 signature and validate it matches
         if (ECDSA.recover(hash, signature) != verifyingSigner) {
             return ("", _packValidationData(true, validUntil, validAfter));
-        }
-        
-        // Validate gas cost doesn't exceed maximum allowed
-        if (maxCost > maxAllowedGasCost) {
-            revert GasCostTooHigh(maxCost, maxAllowedGasCost);
         }
         
         emit Validated(userOpHash, maxCost, validUntil, validAfter);
@@ -308,5 +272,5 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
      * variables without shifting down storage in the inheritance chain.
      * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    uint256[48] private __gap;
+    uint256[50] private __gap;
 }
