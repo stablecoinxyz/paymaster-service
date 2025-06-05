@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity >=0.8.0;
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 // import {Utilities} from "./utils/Utilities.sol";
@@ -308,6 +308,10 @@ contract SignatureVerifyingPaymaster is Test {
 
     function test_rejects_high_gas_fee() public {
 
+        // First, lower the maxAllowedGasCost to a very small amount to trigger the validation
+        vm.prank(owner);
+        paymaster.setMaxAllowedGasCost(1000); // Set to 1000 wei (very small)
+
         GasConsumingContract gasConsumingContract = new GasConsumingContract();
 
         bytes memory functionData = abi.encodeWithSelector(
@@ -320,8 +324,8 @@ contract SignatureVerifyingPaymaster is Test {
             functionData
         );
 
-        // set the gas limit to be large
-        callGasLimit = 1000000000;
+        // Use normal gas limit - the issue is the maxAllowedGasCost, not the gas limit
+        callGasLimit = 10000000;
 
         PackedUserOperation memory userOp = generateSignedUserOperation(
             executeCallData,
@@ -334,10 +338,10 @@ contract SignatureVerifyingPaymaster is Test {
         PackedUserOperation[] memory ops = new PackedUserOperation[](1);
         ops[0] = userOp;
 
-        //reverts due to gas cost too high
-        vm.expectRevert();
+        //reverts due to gas cost too high - the paymaster should reject due to maxCost > maxAllowedGasCost
+        vm.expectRevert(abi.encodeWithSelector(IEntryPoint.FailedOpWithRevert.selector, 0, "AA33 reverted", abi.encodeWithSelector(SignatureVerifyingPaymasterV07.GasCostTooHigh.selector, 10265600000, 1000)));
         entryPoint.handleOps(ops, payable(address(users[0])));
-        
+
     }
 
     function test_owner_can_withdrawDeposit() public {
@@ -438,24 +442,24 @@ contract SignatureVerifyingPaymaster is Test {
     ) internal returns (PackedUserOperation memory) {
         uint128 gasLimit = uint128(callGasLimit);
         uint128 verificationGasLimit = gasLimit;
-        
+
         uint128 maxPriorityFeePerGas = 256;
         uint128 maxFeePerGas = maxPriorityFeePerGas;
         uint128 postOpGasLimit = 100000;
 
-        // matching the way it is hashed in the paymaster
-        bytes32 hash = keccak256(abi.encode(
+        // Generate EIP-712 signature matching the paymaster contract
+        bytes32 calldataHash = keccak256(callData);
+
+        // Get the EIP-712 hash from the paymaster contract
+        bytes32 hash = paymaster.getHash(
             validUntil,
             validAfter,
-            block.chainid,
-            address(paymaster),
-            sender
-        ));
+            sender,
+            nonce,
+            calldataHash
+        );
 
-        // Convert to EIP-191 format
-        bytes32 ethSignedHash = hash.toEthSignedMessageHash();
-
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(PaymasterSigner, ethSignedHash);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(PaymasterSigner, hash);
 
         bytes memory signature = abi.encodePacked(r, s, v);
 
