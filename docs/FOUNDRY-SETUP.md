@@ -129,3 +129,101 @@ ETHERSCAN_API_KEY=...
 - `--etherscan-api-key`: API key for Etherscan verification
 - `--gas-estimate-multiplier`: Multiply gas estimates by this factor (useful for congested networks)
 - `--legacy`: Use legacy transaction format instead of EIP-1559
+
+## Contract Source Code Verification
+
+In Forge, there are several ways to verify the source code of a deployed contract:
+
+### 1. During Deployment (Automatic Verification)
+
+You can verify the contract automatically during deployment by adding the `--verify` flag to your `forge script` command:
+
+```bash
+forge script script/DeployPaymaster.s.sol \
+  --rpc-url $RPC_URL \
+  --broadcast \
+  --verify \
+  --etherscan-api-key $BASESCAN_API_KEY
+```
+
+### 2. After Deployment (Manual Verification)
+
+If you need to verify a contract that was already deployed, use the `forge verify-contract` command:
+
+```bash
+forge verify-contract \
+  --rpc-url $RPC_URL \
+  --etherscan-api-key $BASESCAN_API_KEY \
+  <CONTRACT_ADDRESS> \
+  <CONTRACT_NAME>
+```
+
+For example, to verify your paymaster contract:
+
+```bash
+forge verify-contract \
+  --rpc-url $RPC_URL \
+  --etherscan-api-key $BASESCAN_API_KEY \
+  0x1234567890123456789012345678901234567890 \
+  contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07
+```
+
+### 3. Verify with Constructor Arguments
+
+If your contract has constructor arguments, you need to include them:
+
+```bash
+forge verify-contract \
+  --rpc-url $RPC_URL \
+  --etherscan-api-key $BASESCAN_API_KEY \
+  --constructor-args $(cast abi-encode "constructor(address)" 0xEntryPointAddress) \
+  <CONTRACT_ADDRESS> \
+  <CONTRACT_NAME>
+```
+
+### 4. Check Verification Status
+
+To check if a contract is already verified:
+
+```bash
+forge verify-check \
+  --rpc-url $RPC_URL \
+  --etherscan-api-key $BASESCAN_API_KEY \
+  <CONTRACT_ADDRESS>
+```
+
+### 5. Verify with Custom Compiler Settings
+
+If you have specific compiler settings (like via-ir), you may need to specify them:
+
+```bash
+forge verify-contract \
+  --rpc-url $RPC_URL \
+  --etherscan-api-key $BASESCAN_API_KEY \
+  --compiler-version 0.8.23 \
+  --via-ir \
+  <CONTRACT_ADDRESS> \
+  <CONTRACT_NAME>
+```
+
+### Environment Variables for Different Networks
+
+For Base network:
+```env
+BASESCAN_API_KEY=your_basescan_api_key
+RPC_URL=https://mainnet.base.org
+```
+
+For Ethereum mainnet:
+```env
+ETHERSCAN_API_KEY=your_etherscan_api_key
+RPC_URL=https://eth-mainnet.alchemyapi.io/v2/your-api-key
+```
+
+### Common Issues and Solutions
+
+1. **Verification fails due to compiler settings**: Make sure your `foundry.toml` settings match what was used during compilation
+2. **Multiple contracts in one file**: Specify the full path like `contracts/MyContract.sol:MyContract`
+3. **Proxy contracts**: You may need to verify both the implementation and proxy separately
+
+The `--verify` flag during deployment is usually the most convenient method as it handles verification automatically right after deployment.
