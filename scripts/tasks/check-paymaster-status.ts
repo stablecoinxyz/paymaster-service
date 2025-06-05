@@ -32,7 +32,7 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
 
     // Get the contract
     const paymaster = await hre.viem.getContractAt(
-      'SignatureVerifyingPaymasterV07', 
+      'contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', 
       proxyAddress as Address
     );
 

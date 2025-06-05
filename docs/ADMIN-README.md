@@ -2,7 +2,7 @@
 
 This repository contains a UUPS (Universal Upgradeable Proxy Standard) implementation of the SignatureVerifyingPaymasterV07 contract for ERC-4337 account abstraction.
 
-Common management tasks are handled by the admin scripts, defined as hardhat tasks.
+Common management tasks are handled by the admin scripts, defined as hardhat tasks and Foundry scripts.
 
 ## Overview
 
@@ -39,6 +39,10 @@ TRUSTED_SIGNER_PRIVATE_KEY="0x..."
 
 ## Admin Scripts
 
+You can use either Hardhat tasks or Foundry scripts to manage your paymaster contract.
+
+### Hardhat Tasks
+
 Admin scripts are organized in the `scripts/tasks` folder.
 
 ```text
@@ -53,9 +57,9 @@ scripts/
 │   └── withdraw-funds.ts
 ```
 
-## Using the Tasks
+#### Using the Hardhat Tasks
 
-### Deployment
+##### Deployment
 
 To deploy the initial implementation and proxy:
 
@@ -63,55 +67,25 @@ To deploy the initial implementation and proxy:
 npx hardhat deploy-paymaster --network <your-network>
 ```
 
-**NOTE:** After your initial deploy, save the proxy address that is output by the script in your `.env` file.
+##### Upgrading the Implementation
 
-### Checking Paymaster Status
-
-To check the current status of your paymaster:
+To upgrade the implementation contract:
 
 ```bash
-npx hardhat paymaster-status --network <your-network>
+npx hardhat upgrade-paymaster --network <your-network>
 ```
 
-This will show:
+##### Funding the Paymaster
 
-- Implementation address
-- Owner address
-- EntryPoint address
-- Trusted signer
-- **Max Allowed Gas Cost** *(new)*
-- Current Deposit in EntryPoint
-- Contract version
-- **EIP712 Domain Separator** *(new)*
-
-Example output:
-
-```text
-Implementation address: 0x9a1a3a87aa6E40CBc20955E02479dD8f654cD073
-Owner: 0x124b082e8DF36258198da4Caa3B39c7dFa64D9cE
-EntryPoint: 0x0000000071727De22E5E9d8BAf0edAc6f37da032
-Verifying Signer: 0xbb46C0C1792d7b606Db07cead656efd93b433222
-Max Allowed Gas Cost: 0.01 ETH
-
-Paymaster ETH balance: 0.01 ETH
-
-Contract version: 4
-EIP712 Domain Separator: 0x1234...abcd
-```
-
-### Funding the Paymaster
-
-Send ETH to the proxy address.
-
-Configure the amount of ETH in `scripts/tasks/deposit-funds.ts`. Call the `deposit()` function on the proxy to transfer funds to the EntryPoint:
+To deposit funds to the EntryPoint contract:
 
 ```bash
 npx hardhat deposit-funds --network <your-network>
 ```
 
-### Withdrawing Funds
+##### Withdrawing Funds
 
-To withdraw funds from EntryPoint back to the proxy:
+To withdraw funds from the EntryPoint contract:
 
 ```bash
 npx hardhat withdraw-funds --network <your-network>
@@ -123,7 +97,7 @@ or
 npx hardhat withdraw-funds --amount 0.01 --network <your-network>
 ```
 
-### Verifying the Contract source
+##### Verifying the Contract source
 
 To verify the implementation contract source code on Etherscan:
 
@@ -133,7 +107,7 @@ npx hardhat verify-source --network <your-network>
 
 To verify the proxy contract in order to access read and write functions on the blockchain scanner interface, go to the proxy address and click on the "Contract" tab, then click on the "Is this a proxy?" button and follow the instructions there.
 
-### Updating the Trusted Signer
+##### Updating the Trusted Signer
 
 To change the address authorized to sign paymaster approvals:
 
@@ -141,30 +115,83 @@ To change the address authorized to sign paymaster approvals:
 npx hardhat update-signer --address 0xNewSignerAddress --network <your-network>
 ```
 
-### Updating the Gas Limit *(new)*
+### Foundry Scripts
 
-To change the maximum allowed gas cost the paymaster will sponsor:
+Foundry scripts are organized in the `script` folder.
 
-```bash
-npx hardhat update-gas-limit --limit 0.02 --network <your-network>
+```text
+script/
+├── DeployPaymaster.s.sol
+├── UpgradePaymaster.s.sol
+├── DepositFunds.s.sol
+├── WithdrawFunds.s.sol
+├── UpdateSigner.s.sol
+├── UpdateGasLimit.s.sol
+└── CheckStatus.s.sol
 ```
 
-This sets the maximum gas cost to 0.02 ETH. The paymaster will reject any UserOperations that would cost more than this limit.
+#### Using the Foundry Scripts
 
-Valid range: 0.001 ETH to 1.0 ETH
+##### Deployment
 
-### Upgrading the implementation
-
-When you need to upgrade the implementation:
-
-1. Make changes to the `SignatureVerifyingPaymasterV07.sol` contract and update the version number
-2. Make sure your changes are compatible with the existing storage layout (only add new variables at the end of the contract)
-3. Compile the contract successfully (`npm run compile`) and copy the ABI and bytecode to the `contracts/abi` folder (`npm run copy`)
-4. Ensure the proxy address (PROXY_ADDRESS) is set in your `.env` file
-5. Run the upgrade task:
+To deploy the initial implementation and proxy:
 
 ```bash
-npx hardhat upgrade-paymaster --network <your-network>
+forge script script/DeployPaymaster.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+##### Upgrading the Implementation
+
+To upgrade the implementation contract:
+
+```bash
+forge script script/UpgradePaymaster.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+##### Funding the Paymaster
+
+To deposit funds to the EntryPoint contract:
+
+```bash
+forge script script/DepositFunds.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+##### Withdrawing Funds
+
+To withdraw funds from the EntryPoint contract:
+
+```bash
+forge script script/WithdrawFunds.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+or with a custom amount:
+
+```bash
+AMOUNT=50000000000000000 forge script script/WithdrawFunds.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+##### Checking Paymaster Status
+
+To check the status of the paymaster:
+
+```bash
+forge script script/CheckStatus.s.sol --rpc-url $RPC_URL
+```
+
+##### Updating the Trusted Signer
+
+To change the address authorized to sign paymaster approvals:
+
+```bash
+NEW_SIGNER=0xNewSignerAddress forge script script/UpdateSigner.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
+```
+
+##### Updating the Gas Limit
+
+To update the maximum allowed gas cost:
+
+```bash
+NEW_LIMIT=10000000000000000 forge script script/UpdateGasLimit.s.sol --rpc-url $RPC_URL --broadcast --private-key $DEPLOYER_PRIVATE_KEY
 ```
 
 ## Important Considerations

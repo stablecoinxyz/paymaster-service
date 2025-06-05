@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Updated `SignatureVerifyingPaymasterV07` contract to address security issues identified in the audit.
+- Implemented fixes for critical, high, medium, and low severity issues.
+- Updated documentation in `AUDIT-FIXES.md` to reflect the changes and test completeness.
+- Moved all documentation files except the main `README.md` to the `docs/` directory.
+- Updated the main `README.md` to include links to the moved documentation files.
+
 ## 0.3.2
 
 - Cleaned up README and admin scripts

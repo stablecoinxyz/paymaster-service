@@ -84,6 +84,12 @@ const config: HardhatUserConfig = {
       viaIR: true,
     },
   },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
+  },
   networks: {
     mainnet: {
       url: process.env.MAINNET_RPC_URL || "",

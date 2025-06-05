@@ -50,6 +50,10 @@ npm run copy
 
 For details on the admin tasks, such as deploying, upgrading, funding the paymaster, etc., see the [ADMIN-README.md](ADMIN-README.md) file.
 
+## Development Frameworks
+
+This project supports both Hardhat and Foundry for development and deployment. See the [ADMIN-README.md](ADMIN-README.md) for details on using each framework.
+
 ## Run locally for development
 
 Running the project locally is done by running the following command. The paymaster service will be available at `https://localhost:3000`.
@@ -61,3 +65,13 @@ npm run start
 ## Author
 
 - Eric Tsang [@Ectsang](https://www.github.com/Ectsang)
+
+## Other Documentation
+
+- [Admin Guide](docs/ADMIN-README.md)
+- [Auditor Guide](docs/AUDITOR-README.md)
+- [Changelog](docs/CHANGELOG.md)
+- [Foundry Setup](docs/FOUNDRY-SETUP.md)
+- [Foundry Usage](docs/FOUNDRY-README.md)
+- [0xMacro Audit](docs/MACRO-README.md)
+- [Audit Fixes](docs/AUDIT-FIXES.md)

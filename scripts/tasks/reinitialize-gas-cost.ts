@@ -34,7 +34,7 @@ export async function main(hre: HardhatRuntimeEnvironment, gasLimitEth: string =
     console.log(`Using account: ${deployerAddress}`);
 
     // Get the paymaster contract
-    const paymaster = await hre.viem.getContractAt('SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
 
     // Check if the deployer is the owner
     const owner = await paymaster.read.owner([]) as Address;

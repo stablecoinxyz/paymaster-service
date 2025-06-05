@@ -62,7 +62,7 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   console.log(`Trusted signer: ${TRUSTED_SIGNER}`);
 
   // Get contract artifacts directly
-  const paymasterArtifact = await hre.artifacts.readArtifact('SignatureVerifyingPaymasterV07');
+  const paymasterArtifact = await hre.artifacts.readArtifact('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07');
   const proxyArtifact = await hre.artifacts.readArtifact('@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy');
   
   // Deploy the implementation contract first
@@ -263,7 +263,7 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   
   // Get the proxy contract with the paymaster ABI
   const paymaster = await hre.viem.getContractAt(
-    'SignatureVerifyingPaymasterV07',
+    'contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07',
     proxyAddress as Address,
   );
 
@@ -326,7 +326,7 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   console.log(`Upgrading with account: ${deployer.account.address}`);
   
   // Get the contract artifact
-  const paymasterArtifact = await hre.artifacts.readArtifact('SignatureVerifyingPaymasterV07');
+  const paymasterArtifact = await hre.artifacts.readArtifact('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07');
   console.log("Preparing deterministic deployment...");
   
   // Start with version 1 for upgrades 

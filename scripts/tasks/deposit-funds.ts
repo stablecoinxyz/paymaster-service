@@ -48,7 +48,7 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
     console.log(`Using account: ${deployerAddress}`);
 
     // Get the contract
-    const paymaster = await hre.viem.getContractAt('SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
 
     // Get the entry point contract
     const entryPointAddress = await paymaster.read.entryPoint([]) as Address;

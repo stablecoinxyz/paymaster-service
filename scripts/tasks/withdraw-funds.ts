@@ -37,7 +37,7 @@ export async function main(hre: HardhatRuntimeEnvironment, amount: string = '0.0
     console.log(`Amount to withdraw: ${withdrawAmount} ETH`);
 
     // Get the contract
-    const paymaster = await hre.viem.getContractAt('SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
 
     // Check if the deployer is the owner
     const owner = await paymaster.read.owner([]) as Address;

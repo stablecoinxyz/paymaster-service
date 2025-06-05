@@ -2,6 +2,7 @@ import {
   http,
   createWalletClient,
   Chain,
+  Hex,
 } from "viem";
 import { localhost, base, baseSepolia, hardhat } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
@@ -55,7 +56,7 @@ export const getChain = (chain: string): Chain => {
  * @returns The wallet client.
  */
 export const getDeployerWalletClient = (chain: string) => {
-  const account = privateKeyToAccount(`0x${process.env.DEPLOYER_PRIVATE_KEY}`);
+  const account = privateKeyToAccount(process.env.DEPLOYER_PRIVATE_KEY as Hex);
 
   return createWalletClient({
     account,
