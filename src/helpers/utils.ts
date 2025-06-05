@@ -71,7 +71,7 @@ export const getDeployerWalletClient = (chain: string) => {
  * @returns The wallet client for the trusted signer.
  */
 export const getTrustedSignerWalletClient = (chain: string) => {
-  const account = privateKeyToAccount(`0x${process.env.TRUSTED_SIGNER_PRIVATE_KEY}`);
+  const account = privateKeyToAccount(process.env.TRUSTED_SIGNER_PRIVATE_KEY as Hex);
 
   return createWalletClient({
     account,
