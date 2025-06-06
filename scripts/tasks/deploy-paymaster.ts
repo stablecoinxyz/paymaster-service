@@ -434,11 +434,30 @@ export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
     throw new Error('upgradeToAndCall function not found in ABI');
   }
 
-  // Encode the upgrade call
+  // Prepare EIP712 reinitialization
+  console.log("Preparing EIP712 reinitialization...");
+  
+  // Get the reinitializeEIP712 function from the paymaster ABI
+  const reinitializeFunction = paymasterArtifact.abi.find((item: any) => 
+    item.type === 'function' && item.name === 'reinitializeEIP712'
+  );
+  
+  if (!reinitializeFunction) {
+    throw new Error('reinitializeEIP712 function not found in ABI. Make sure to add it to the contract.');
+  }
+  
+  // Encode the reinitializeEIP712 call
+  const reinitData = encodeFunctionData({
+    abi: [reinitializeFunction],
+    functionName: 'reinitializeEIP712',
+    args: [] // No arguments needed
+  });
+
+  // Encode the upgrade call with reinitialization
   const upgradeCalldata = encodeFunctionData({
     abi: [upgradeFunction],
     functionName: 'upgradeToAndCall',
-    args: [implementationAddress, '0x' as Hex]
+    args: [implementationAddress, reinitData]
   });
 
   // Send the upgrade transaction

@@ -20,10 +20,15 @@ contract UpgradePaymasterScript is Script {
             IEntryPoint(entryPointAddress)
         );
         
-        // Upgrade proxy to new implementation
+        // Add this function to re-initialize EIP712
+        bytes memory initData = abi.encodeWithSignature(
+            "reinitializeEIP712()",
+            ""
+        );
+
         UUPSUpgradeable(proxyAddress).upgradeToAndCall(
             address(newImplementation),
-            "" // No initialization data for upgrade
+            initData // ✅ Proper initialization
         );
         
         console.log("New implementation deployed at:", address(newImplementation));

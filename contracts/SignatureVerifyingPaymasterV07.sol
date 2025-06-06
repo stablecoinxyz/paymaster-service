@@ -75,6 +75,10 @@ contract SignatureVerifyingPaymasterV07 is Initializable, UUPSUpgradeable, BaseP
         _transferOwnership(_owner);
     }
 
+    function reinitializeEIP712() external reinitializer(4) { // 3rd reinitializer after initial deployment
+        __EIP712_init(DOMAIN_NAME, DOMAIN_VERSION);
+    }
+
     /**
      * @dev Updates the authorized signer address
      * @param _verifyingSigner The new authorized signer address

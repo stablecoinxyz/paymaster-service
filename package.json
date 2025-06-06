@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "compile": "hardhat compile",
-    "copy": "npm run compile && copyfiles -f artifacts/contracts/**/*.json contracts/abi/",
+    "copy": "copyfiles -f artifacts/contracts/**/*.json contracts/abi/",
+    "copy-paymaster": "copyfiles -f artifacts/contracts/SignatureVerifyingPaymasterV07.sol/SignatureVerifyingPaymasterV07.json contracts/abi/",
     "start": "tsx src/index.ts"
   },
   "dependencies": {
