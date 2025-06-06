@@ -57,8 +57,8 @@ const generatePaymasterSignature = async (
   
   return await walletClient.signTypedData({
     domain: {
-      // name: "SignatureVerifyingPaymaster",
-      // version: PAYMASTER_VERSION,
+      name: "",
+      version: "",
       chainId: chainId,
       verifyingContract: paymasterAddress
     },
