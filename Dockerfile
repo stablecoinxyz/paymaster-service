@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -19,7 +19,7 @@ RUN npm run compile && npm run copy-paymaster
 # Note: Using tsx in production, so build step is optional
 
 # Production stage
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
@@ -42,10 +42,6 @@ EXPOSE 3000
 
 # Set NODE_ENV to production
 ENV NODE_ENV=production
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Run the application
 CMD ["npm", "start"]
