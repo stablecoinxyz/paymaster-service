@@ -8,6 +8,22 @@ import { localhost, base, baseSepolia, hardhat } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 import "dotenv/config";
 
+// Radius Testnet chain
+const radiusTestnet = {
+  id: 1223953,
+  name: "Radius Testnet",
+  network: "radiusTestnet",
+  nativeCurrency: { name: "Radius", symbol: "USD", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ["https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr"],
+    },
+    public: {
+      http: ["https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr"],
+    },
+  },
+};
+
 /**
  * Returns the bigger of two BigInts.
  * @param a The first BigInt.
@@ -27,6 +43,7 @@ export const isChainSupported = (chain: string) => {
   return (
     chain === "baseSepolia" || 
     chain === "base" || 
+    chain === "radiusTestnet" ||
     chain === "localhost" || 
     chain === "hardhat"
   );
@@ -42,6 +59,8 @@ export const getChain = (chain: string): Chain => {
     return baseSepolia;
   } else if (chain === "base") {
     return base;
+  } else if (chain === "radiusTestnet") {
+    return radiusTestnet;
   } else if (chain === "localhost") {
     return localhost;
   } else if (chain === "hardhat") {
@@ -104,6 +123,8 @@ export const getRPCUrl = (chain: string) => {
     return process.env.BASE_SEPOLIA_RPC_URL;
   } else if (chain === "base") {
     return process.env.BASE_RPC_URL;
+  } else if (chain === "radiusTestnet") {
+    return process.env.RADIUS_TESTNET_RPC_URL;
   } else if (chain === "localhost" || chain === "hardhat") {
     return process.env.LOCALHOST_RPC_URL;
   }
@@ -120,6 +141,8 @@ export const getBundlerUrl = (chain: string) => {
     return process.env.BASE_SEPOLIA_BUNDLER_URL;
   } else if (chain === "base") {
     return process.env.BASE_BUNDLER_URL;
+  } else if (chain === "radiusTestnet") {
+    return process.env.RADIUS_TESTNET_BUNDLER_URL;
   } else if (chain === "localhost" || chain === "hardhat") {
     return process.env.LOCALHOST_BUNDLER_URL;
   }
@@ -136,6 +159,8 @@ export const getScannerUrl = (chain: string) => {
     return "https://sepolia.basescan.org";
   } else if (chain === "base") {
     return "https://basescan.org";
+  } else if (chain === "radiusTestnet") {
+    return "https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr";
   } else if (chain === "localhost" || chain === "hardhat") {
     return "http://localhost:8545";
   }

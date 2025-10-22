@@ -72,6 +72,5 @@ npm run start
 - [Auditor Guide](docs/AUDITOR-README.md)
 - [Changelog](docs/CHANGELOG.md)
 - [Foundry Setup](docs/FOUNDRY-SETUP.md)
-- [Foundry Usage](docs/FOUNDRY-README.md)
 - [0xMacro Audit](docs/MACRO-README.md)
 - [Audit Fixes](docs/AUDIT-FIXES.md)
