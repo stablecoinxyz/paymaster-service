@@ -12,7 +12,7 @@ import { Address, getContract, http } from "viem";
 import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, isChainSupported } from "../helpers/utils";
 import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 import { createSbcRpcHandler } from "../relay";
-const Sentry = require("@sentry/node");
+import * as Sentry from "@sentry/node";
 
 interface IQueryString {
   name: string;

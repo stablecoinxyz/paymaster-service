@@ -33,6 +33,7 @@ import {
   pmGetPaymasterStubDataParamsSchema,
   pmSponsorUserOperationParamsSchema,
 } from "./helpers/schema";
+import { ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET } from "./helpers/utils";
 
 import {
   abi as PaymasterV07Abi,
@@ -229,7 +230,7 @@ const handleSbcMethod = async (
 
     const [userOperation, entryPoint] = params.data;
 
-    if (entryPoint !== ENTRYPOINT_ADDRESS_V07) {
+    if (entryPoint !== ENTRYPOINT_ADDRESS_V07 && entryPoint !== ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET) {
       throw new RpcError(
         "EntryPoint not supported",
         ValidationErrors.InvalidFields
@@ -280,7 +281,7 @@ const handleSbcMethod = async (
 
     const [userOperation, entryPoint] = params.data;
 
-    if (entryPoint === ENTRYPOINT_ADDRESS_V07) {
+    if (entryPoint === ENTRYPOINT_ADDRESS_V07 || entryPoint === ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET) {
       console.log("Handling pm_getPaymasterData for v0.7 entrypoint");
       return await handleSbcMethodV07(
         userOperation as UserOperation<"v0.7">,
@@ -311,7 +312,7 @@ const handleSbcMethod = async (
 
     const [userOperation, entryPoint] = params.data;
 
-    if (entryPoint === ENTRYPOINT_ADDRESS_V07) {
+    if (entryPoint === ENTRYPOINT_ADDRESS_V07 || entryPoint === ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET) {
       console.log("Handling pm_sponsorUserOperation for v0.7 entrypoint");
       return await handleSbcMethodV07(
         userOperation as UserOperation<"v0.7">,
@@ -340,7 +341,7 @@ const handleSbcMethod = async (
 
     const [userOperation, entryPoint] = params.data;
 
-    if (entryPoint === ENTRYPOINT_ADDRESS_V07) {
+    if (entryPoint === ENTRYPOINT_ADDRESS_V07 || entryPoint === ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET) {
       console.log("Handling eth_estimateUserOperationGas for v0.7 entrypoint");
       return await handleSbcMethodV07(
         userOperation as UserOperation<"v0.7">, 

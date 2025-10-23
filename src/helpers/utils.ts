@@ -24,6 +24,8 @@ const radiusTestnet = {
   },
 };
 
+export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0x9b443e4bd122444852B52331f851a000164Cc83F";
+
 /**
  * Returns the bigger of two BigInts.
  * @param a The first BigInt.
