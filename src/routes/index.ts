@@ -68,11 +68,22 @@ const setupHandler = async (chain: string) => {
     const trustedSigner = trustedSignerWalletClient.account.address;
     console.log(`Trusted signer address: ${trustedSigner}`);
 
-    const paymasterAddress = process.env.PROXY_ADDRESS as Address; 
-    console.log(`Using paymaster at address: ${paymasterAddress}`);
-    
-    if (!paymasterAddress) {
-      const error = new Error("PROXY_ADDRESS environment variable is not set");
+    const normalPaymasterAddress = process.env.PAYMASTER_PROXY_ADDRESS as Address; 
+    const radiusTestnetPaymasterAddress = process.env.RADIUS_TESTNET_PAYMASTER_PROXY_ADDRESS as Address;
+
+    if (!normalPaymasterAddress || !radiusTestnetPaymasterAddress) {
+      const error = new Error("PROXY_ADDRESS or RADIUS_TESTNET_PAYMASTER_PROXY_ADDRESS environment variable is not set");
+      Sentry.captureException(error);
+      throw error;
+    }
+
+    let paymasterAddress: Address;
+    if (chain === "radiusTestnet") {
+      paymasterAddress = radiusTestnetPaymasterAddress;
+    } else if (chain === "baseSepolia" || chain === "base") {
+      paymasterAddress = normalPaymasterAddress;
+    } else {
+      const error = new Error(`Chain (${chain}) is not supported`);
       Sentry.captureException(error);
       throw error;
     }
