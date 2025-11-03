@@ -2,12 +2,15 @@
 
 A paymaster service that lets you use a custom paymaster contract. The service is built using Fastify, deployed to Railway.
 
-Currently, the service supports v0.7 of the Account Abstraction standard. The paymaster smart contract is deployed using CREATE2 on:
+Currently, the service supports v0.7 of the Account Abstraction standard. The paymaster smart contract is deployed on:
 
-- Base Sepolia
-- Base Mainnet
+- Base Sepolia (EntryPoint: `0x0000000071727De22E5E9d8BAf0edAc6f37da032`)
+- Base Mainnet (EntryPoint: `0x0000000071727De22E5E9d8BAf0edAc6f37da032`)
+- Radius Testnet (EntryPoint: `0x9b443e4bd122444852B52331f851a000164Cc83F`)
 
-The [admin scripts](ADMIN-README.md) are capable of deploying the paymaster contract to other EVM-compatible chains.
+**Note:** Radius Testnet uses a custom EntryPoint deployment, not the canonical v0.7 address.
+
+The [admin scripts](./docs/ADMIN-README.md) are capable of deploying the paymaster contract to other EVM-compatible chains.
 
 For more details on individual releases, see the [CHANGELOG.md](CHANGELOG.md) file.
 
@@ -16,18 +19,28 @@ For more details on individual releases, see the [CHANGELOG.md](CHANGELOG.md) fi
 To run this project, you will need to add the following environment variables to your .env file. Run `cp .env.example .env` to create it.
 
 ```bash
-ENTRY_POINT_V07_ADDRESS=""
+# EntryPoint v0.7 address (canonical)
+ENTRY_POINT_V07_ADDRESS="0x0000000071727De22E5E9d8BAf0edAc6f37da032"
 
+# Base Sepolia
 BASE_SEPOLIA_RPC_URL=""
-BASE_RPC_URL=""
-
 BASE_SEPOLIA_BUNDLER_URL=""
+
+# Base Mainnet
+BASE_RPC_URL=""
 BASE_BUNDLER_URL=""
 
-BASESCAN_API_KEY=""
+# Radius Testnet
+RADIUS_TESTNET_RPC_URL=""
+RADIUS_TESTNET_BUNDLER_URL=""
 
-# Proxy address of the Paymaster (from the initial deployment)
-PROXY_ADDRESS=""
+# Block explorer API keys
+BASESCAN_API_KEY=""
+RADIUS_TESTNET_API_KEY=""
+
+# Proxy addresses (different for each network)
+PROXY_ADDRESS=""  # Base Sepolia/Mainnet
+PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET=""  # Radius Testnet
 
 # Deployer wallet private key
 DEPLOYER_PRIVATE_KEY="0x..."
@@ -48,7 +61,24 @@ npm run copy
 
 ## Admin Tasks
 
-For details on the admin tasks, such as deploying, upgrading, funding the paymaster, etc., see the [ADMIN-README.md](ADMIN-README.md) file.
+For details on the admin tasks, such as deploying, upgrading, funding the paymaster, etc., see the [ADMIN-README.md](docs/ADMIN-README.md) file.
+
+### Radius Testnet Quick Commands
+
+For Radius Testnet, use these convenience scripts:
+
+```bash
+# Check paymaster deposit balance
+npm run check-radius
+
+# Fund the paymaster (default: 0.5 USD)
+npm run fund-radius
+
+# Fund with custom amount
+DEPOSIT_AMOUNT=1 npm run fund-radius
+```
+
+These scripts use the `PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET` environment variable and the custom Radius EntryPoint (`0x9b443e4bd122444852B52331f851a000164Cc83F`).
 
 ## Development Frameworks
 

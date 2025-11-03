@@ -7,7 +7,9 @@
     "compile": "hardhat compile",
     "copy": "copyfiles -f artifacts/contracts/**/*.json contracts/abi/",
     "copy-paymaster": "copyfiles -f artifacts/contracts/SignatureVerifyingPaymasterV07.sol/SignatureVerifyingPaymasterV07.json contracts/abi/",
-    "start": "tsx src/index.ts"
+    "start": "tsx src/index.ts",
+    "check-radius": "tsx scripts/check-radius-paymaster.ts",
+    "fund-radius": "tsx scripts/deposit-radius-paymaster.ts"
   },
   "dependencies": {
     "@account-abstraction/contracts": "0.7.0",
