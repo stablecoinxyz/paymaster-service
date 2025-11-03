@@ -113,7 +113,7 @@ const createPaymasterData = (
  */
 const handleSbcMethodV07 = async (
   userOperation: UserOperation<"v0.7">,
-  altoBundlerV07: PimlicoBundlerClient<ENTRYPOINT_ADDRESS_V07_TYPE>,
+  altoBundlerV07: PimlicoBundlerClient<any>,
   paymasterV07: GetContractReturnType<
     typeof PaymasterV07Abi,
     PublicClient<Transport, Chain>
@@ -155,7 +155,7 @@ const handleSbcMethodV07 = async (
         paymasterData: paymasterData
       };
       
-      let gasEstimates: EstimateUserOperationGasReturnType<ENTRYPOINT_ADDRESS_V07_TYPE>;
+      let gasEstimates: EstimateUserOperationGasReturnType<any>;
       try {
         gasEstimates = await altoBundlerV07.estimateUserOperationGas({
           userOperation: op,
@@ -208,7 +208,7 @@ const handleSbcMethodV07 = async (
  * @returns The result of the method
  */
 const handleSbcMethod = async (
-  altoBundlerV07: PimlicoBundlerClient<ENTRYPOINT_ADDRESS_V07_TYPE>,
+  altoBundlerV07: PimlicoBundlerClient<any>,
   paymasterV07: GetContractReturnType<
     typeof PaymasterV07Abi,
     PublicClient<Transport, Chain>
@@ -365,7 +365,7 @@ const handleSbcMethod = async (
 };
 
 export const createSbcRpcHandler = (
-  altoBundlerV07: PimlicoBundlerClient<ENTRYPOINT_ADDRESS_V07_TYPE>,
+  altoBundlerV07: PimlicoBundlerClient<any>,
   paymasterV07: GetContractReturnType<
     typeof PaymasterV07Abi,
     PublicClient<Transport, Chain>

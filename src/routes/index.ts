@@ -9,10 +9,11 @@ import cors from "@fastify/cors";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
 import { createPimlicoBundlerClient } from "permissionless/clients/pimlico";
 import { Address, getContract, http, isAddress } from "viem";
-import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, isChainSupported } from "../helpers/utils";
+import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, isChainSupported, getEntryPointAddress } from "../helpers/utils";
 import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 import { createSbcRpcHandler } from "../relay";
 import * as Sentry from "@sentry/node";
+import { EntryPoint } from "permissionless/types/entrypoint";
 
 interface IQueryString {
   name: string;
@@ -129,10 +130,11 @@ const setupHandler = async (chain: string) => {
       throw new Error(errorMessage);
     }
 
+    const entryPointAddress = getEntryPointAddress(chain);
     const altoBundlerV07 = createPimlicoBundlerClient({
       chain: getChain(chain),
       transport: http(bundlerUrl),
-      entryPoint: ENTRYPOINT_ADDRESS_V07,
+      entryPoint: entryPointAddress as EntryPoint,
     });
 
     const rpcHandler = createSbcRpcHandler(

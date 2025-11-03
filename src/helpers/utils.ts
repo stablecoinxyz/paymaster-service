@@ -27,6 +27,20 @@ const radiusTestnet = {
 export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0x9b443e4bd122444852B52331f851a000164Cc83F";
 
 /**
+ * Returns the correct EntryPoint address for the given chain.
+ * @param chain The name of the chain.
+ * @returns The EntryPoint address for the chain.
+ */
+export const getEntryPointAddress = (chain: string): `0x${string}` => {
+  if (chain === "radiusTestnet") {
+    return ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET;
+  }
+  // For all other chains, use the canonical v0.7 EntryPoint
+  // This is imported from permissionless/utils in the calling code
+  return "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as `0x${string}`;
+};
+
+/**
  * Returns the bigger of two BigInts.
  * @param a The first BigInt.
  * @param b The second BigInt.
