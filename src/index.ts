@@ -1,9 +1,9 @@
 // Initialize Sentry first
-require("./instrument.js");
-const Sentry = require("@sentry/node");
+import "./instrument.js";
+import * as Sentry from "@sentry/node";
 
 // Then import Fastify and other dependencies
-const Fastify = require("fastify");
+import Fastify from "fastify";
 import routes from "./routes";
 
 async function start(port = 3000) {

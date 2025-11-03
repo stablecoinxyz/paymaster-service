@@ -116,6 +116,11 @@ const config: HardhatUserConfig = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 84532
     },
+    radiusTestnet: {
+      url: process.env.RADIUS_TESTNET_RPC_URL || "",
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 1223953
+    }
   },
   etherscan: {
     apiKey: {
@@ -125,6 +130,7 @@ const config: HardhatUserConfig = {
       optimism: process.env.OPTIMISM_API_KEY || "",
       base: process.env.BASESCAN_API_KEY || "",
       baseSepolia: process.env.BASESCAN_API_KEY || "",
+      radiusTestnet: process.env.RADIUS_TESTNET_API_KEY || "",
     },
     customChains: [
       {
@@ -133,6 +139,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api-sepolia.basescan.org/api",
           browserURL: "https://sepolia.basescan.org"
+        }
+      },
+      {
+        network: "radiusTestnet",
+        chainId: 1223953,
+        urls: {
+          apiURL: "https://api-sepolia.basescan.org/api",
+          browserURL: "https://testnet.radius.xyz"
         }
       }
     ]
