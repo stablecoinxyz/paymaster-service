@@ -9,7 +9,7 @@ contract DepositFundsScript is Script {
         // Load environment variables
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address proxyAddress = vm.envAddress("PROXY_ADDRESS");
-        uint256 depositAmount = 0.02 ether; // Default amount
+        uint256 depositAmount = 0.01 ether; // Default amount
         
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);

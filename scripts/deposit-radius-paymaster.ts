@@ -16,7 +16,7 @@ dotenvConfig();
 
 // Radius Testnet configuration
 const radiusTestnet = {
-  id: 1223953,
+  id: 72344,
   name: 'Radius Testnet',
   nativeCurrency: { name: 'USD', symbol: 'USD', decimals: 18 },
   rpcUrls: {
@@ -25,7 +25,7 @@ const radiusTestnet = {
 };
 
 // Contract addresses
-const ENTRY_POINT_ADDRESS = '0x9b443e4bd122444852B52331f851a000164Cc83F' as const;
+const ENTRY_POINT_ADDRESS = '0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F' as const;
 const PAYMASTER_ADDRESS = process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET as Address;
 
 if (!PAYMASTER_ADDRESS) {
@@ -162,7 +162,7 @@ async function main() {
     const deployerBalanceAfter = await publicClient.getBalance({ address: account.address });
     console.log(`\nDeployer Balance After: ${formatEther(deployerBalanceAfter)} USD`);
 
-    console.log(`\nExplorer: https://testnet.radius.xyz/tx/${txHash}`);
+    console.log(`\nExplorer: https://explorer.testnet.radiustech.xyz/tx/${txHash}`);
     console.log("\n✅ Paymaster is now funded and ready to sponsor transactions!");
 
   } catch (error) {

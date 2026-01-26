@@ -38,8 +38,8 @@ if [ ! -z "$RADIUS_TESTNET_RPC_URL" ]; then
         CHAIN_ID_DEC=$((16#${CHAIN_ID:2}))
         echo -e "${GREEN}SUCCESS${NC}"
         echo "   Chain ID: $CHAIN_ID_DEC (hex: $CHAIN_ID)"
-        if [ "$CHAIN_ID_DEC" != "1223953" ]; then
-            echo -e "   ${YELLOW}WARNING: Expected Chain ID 1223953, got $CHAIN_ID_DEC${NC}"
+        if [ "$CHAIN_ID_DEC" != "72344" ]; then
+            echo -e "   ${YELLOW}WARNING: Expected Chain ID 72344, got $CHAIN_ID_DEC${NC}"
         fi
     else
         echo -e "${RED}FAILED${NC}"

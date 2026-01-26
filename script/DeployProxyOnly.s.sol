@@ -17,8 +17,8 @@ contract DeployProxyOnlyScript is Script {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address trustedSigner = vm.envAddress("TRUSTED_SIGNER");
 
-        // Use the already deployed implementation
-        address implementation = 0xe88c76De10099cCC623EAe15AE7Dd4b6AF9cCcda;
+        // Use the already deployed implementation (new Radius testnet chainId 72344)
+        address implementation = 0xd2f8F112A3855Df8A7eDa1Ebe4887a521802458F;
 
         console.log("Using existing implementation at:", implementation);
 

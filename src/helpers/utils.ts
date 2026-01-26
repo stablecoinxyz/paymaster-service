@@ -10,21 +10,21 @@ import "dotenv/config";
 
 // Radius Testnet chain
 const radiusTestnet = {
-  id: 1223953,
+  id: 72344,
   name: "Radius Testnet",
   network: "radiusTestnet",
   nativeCurrency: { name: "Radius", symbol: "USD", decimals: 18 },
   rpcUrls: {
     default: {
-      http: ["https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr"],
+      http: ["https://rpc.testnet.radiustech.xyz"],
     },
     public: {
-      http: ["https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr"],
+      http: ["https://rpc.testnet.radiustech.xyz"],
     },
   },
 };
 
-export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0x9b443e4bd122444852B52331f851a000164Cc83F";
+export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F";
 
 /**
  * Returns the correct EntryPoint address for the given chain.
@@ -176,7 +176,7 @@ export const getScannerUrl = (chain: string) => {
   } else if (chain === "base") {
     return "https://basescan.org";
   } else if (chain === "radiusTestnet") {
-    return "https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr";
+    return "https://explorer.testnet.radiustech.xyz";
   } else if (chain === "localhost" || chain === "hardhat") {
     return "http://localhost:8545";
   }

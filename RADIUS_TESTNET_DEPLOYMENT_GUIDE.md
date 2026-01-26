@@ -23,10 +23,10 @@ Before deploying the paymaster, ensure you have:
 ✅ **EntryPoint v0.7** deployed to Radius Testnet
 - Note: The canonical address (`0x0000000071727de22e5e9d8baf0edac6f37da032`) may not be available
 - You can deploy to any address using the official EntryPoint contract
-- Example deployment: `0x9b443e4bd122444852B52331f851a000164Cc83F`
+- Current deployment: `0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F`
 
 ✅ **SimpleAccountFactory** (or your account factory) deployed
-- Example deployment: `0x4DEbDe0Be05E51432D9afAf61D84F7F0fEA63495`
+- Current deployment: `0x7d8fB3E53d345601a02C3214e314f28668510b03`
 
 ### Tools Required
 
@@ -36,9 +36,9 @@ Before deploying the paymaster, ensure you have:
 
 ### Radius Testnet Details
 
-- **Chain ID**: `1223953` (hex: `0x12ad11`)
-- **RPC URL**: `https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr`
-- **Block Explorer**: https://testnet.radiustech.xyz/
+- **Chain ID**: `72344` (hex: `0x11a98`)
+- **RPC URL**: `https://rpc.testnet.radiustech.xyz`
+- **Block Explorer**: https://explorer.testnet.radiustech.xyz
 - **Gas Price**: FREE (0 gwei)
 - **Documentation**: https://docs.radiustech.xyz/
 
@@ -57,12 +57,12 @@ The paymaster uses the UUPS (Universal Upgradeable Proxy Standard) pattern:
 1. **Implementation Contract** (`SignatureVerifyingPaymasterV07`)
    - Contains all the logic and code
    - Can be upgraded by deploying a new implementation
-   - Example address: `0xe88c76De10099cCC623EAe15AE7Dd4b6AF9cCcda`
+   - Current address: `0xd2f8F112A3855Df8A7eDa1Ebe4887a521802458F`
 
 2. **Proxy Contract** (`ERC1967Proxy`)
    - User-facing address (never changes)
    - Stores all state and delegates calls to implementation
-   - Example address: `0xD969454b59F4BC2CF19dC37A37aC10eF6495CD8D`
+   - Current address: `0xeAe0528eCfa059D96421268dc8FaeC7DcAf5b9F0`
    - **Always use the proxy address in your applications**
 
 ### How the Paymaster Works
@@ -84,10 +84,10 @@ Create or update your `.env` file with the following variables:
 
 ```bash
 # Radius Testnet RPC
-RADIUS_TESTNET_RPC_URL=https://rpc.testnet.radiustech.xyz/hnijtvptpk6peww9fzxgeji51254buchlb60ihrgmbds5mfr
+RADIUS_TESTNET_RPC_URL=https://rpc.testnet.radiustech.xyz
 
 # EntryPoint v0.7 (use YOUR deployed address)
-ENTRY_POINT_V07_ADDRESS=0x9b443e4bd122444852B52331f851a000164Cc83F
+ENTRY_POINT_V07_ADDRESS=0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F
 
 # Deployer wallet (needs RADIUS tokens for funding paymaster)
 DEPLOYER_PRIVATE_KEY=0x...
@@ -112,13 +112,13 @@ The repository already includes Radius Testnet support in:
 ```typescript
 // Already configured in utils.ts
 const radiusTestnet = {
-  id: 1223953,
+  id: 72344,
   name: "Radius Testnet",
   network: "radiusTestnet",
-  nativeCurrency: { name: "Radius", symbol: "RADIUS", decimals: 18 },
+  nativeCurrency: { name: "Radius", symbol: "USD", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://rpc.testnet.radiustech.xyz/..."] },
-    public: { http: ["https://rpc.testnet.radiustech.xyz/..."] }
+    default: { http: ["https://rpc.testnet.radiustech.xyz"] },
+    public: { http: ["https://rpc.testnet.radiustech.xyz"] }
   }
 };
 ```
@@ -207,12 +207,12 @@ forge create lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol
 ### Step 3: Note the Addresses
 
 From the deployment output, save:
-- **Implementation Address**: e.g., `0xe88c76De10099cCC623EAe15AE7Dd4b6AF9cCcda`
-- **Proxy Address**: e.g., `0xD969454b59F4BC2CF19dC37A37aC10eF6495CD8D`
+- **Implementation Address**: e.g., `0xd2f8F112A3855Df8A7eDa1Ebe4887a521802458F`
+- **Proxy Address**: e.g., `0xeAe0528eCfa059D96421268dc8FaeC7DcAf5b9F0`
 
 **Update your `.env` file** with the proxy address:
 ```bash
-PROXY_ADDRESS=0xD969454b59F4BC2CF19dC37A37aC10eF6495CD8D
+PROXY_ADDRESS=0xeAe0528eCfa059D96421268dc8FaeC7DcAf5b9F0
 ```
 
 ### Step 4: Fund the Paymaster
@@ -271,8 +271,8 @@ EntryPoint Balance: 20000000000000000 [2e16]
 ### View on Block Explorer
 
 Visit the Radius Testnet explorer to view your deployment:
-- Implementation: https://testnet.radiustech.xyz/testnet/address/0xe88c76De10099cCC623EAe15AE7Dd4b6AF9cCcda
-- Proxy: https://testnet.radiustech.xyz/testnet/address/0xD969454b59F4BC2CF19dC37A37aC10eF6495CD8D
+- Implementation: https://explorer.testnet.radiustech.xyz/address/0xd2f8F112A3855Df8A7eDa1Ebe4887a521802458F
+- Proxy: https://explorer.testnet.radiustech.xyz/address/0xeAe0528eCfa059D96421268dc8FaeC7DcAf5b9F0
 
 ---
 
@@ -375,7 +375,7 @@ Supported RPC methods:
 **Solution**:
 1. Verify signer address matches: `cast call $PROXY_ADDRESS "verifyingSigner()(address)" --rpc-url $RADIUS_TESTNET_RPC_URL`
 2. Ensure `TRUSTED_SIGNER` and `TRUSTED_SIGNER_PRIVATE_KEY` match in `.env`
-3. Check EIP-712 domain has correct chainId (1223953)
+3. Check EIP-712 domain has correct chainId (72344)
 
 ### Issue: RPC Connection Errors
 
@@ -398,15 +398,14 @@ Supported RPC methods:
 This guide is based on an actual successful deployment to Radius Testnet:
 
 ```
-Chain: Radius Testnet (1223953)
-EntryPoint: 0x9b443e4bd122444852B52331f851a000164Cc83F
-SimpleAccountFactory: 0x4DEbDe0Be05E51432D9afAf61D84F7F0fEA63495
-Paymaster Implementation: 0xe88c76De10099cCC623EAe15AE7Dd4b6AF9cCcda
-Paymaster Proxy: 0xD969454b59F4BC2CF19dC37A37aC10eF6495CD8D
-Initial Funding: 0.02 RADIUS
+Chain: Radius Testnet (72344)
+EntryPoint: 0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F
+SimpleAccountFactory: 0x7d8fB3E53d345601a02C3214e314f28668510b03
+Paymaster Implementation: 0xd2f8F112A3855Df8A7eDa1Ebe4887a521802458F
+Paymaster Proxy: 0xeAe0528eCfa059D96421268dc8FaeC7DcAf5b9F0
+TestSBC Token: 0x4ace1a89b13bbe0101f73eb47bb83ac711cb2fad
+Initial Funding: 0.01 USD
 ```
-
-**Deployment Transaction**: https://testnet.radiustech.xyz/testnet/tx/0x0fbb5a8b06d146043c9be0b7b653326b0cfced4ffe8f3524e4046210f0d0c59f
 
 ---
 

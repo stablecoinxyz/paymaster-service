@@ -7,7 +7,7 @@ import { abi as PaymasterAbi } from "../contracts/abi/SignatureVerifyingPaymaste
 dotenvConfig();
 
 const radiusTestnet = {
-  id: 1223953,
+  id: 72344,
   name: 'Radius Testnet',
   nativeCurrency: { name: 'USD', symbol: 'USD', decimals: 18 },
   rpcUrls: {
@@ -110,7 +110,7 @@ async function main() {
       console.log('✅ Gas Limit Updated Successfully!');
       console.log('='.repeat(60));
       console.log(`\nNew gas limit: ${formatEther(updatedGasLimit)} USD`);
-      console.log(`Explorer: https://testnet.radius.xyz/tx/${txHash}`);
+      console.log(`Explorer: https://explorer.testnet.radiustech.xyz/tx/${txHash}`);
     } else {
       console.error('❌ Error: Gas limit update failed');
       console.log(`Expected: ${formatEther(newGasLimitWei)} USD`);

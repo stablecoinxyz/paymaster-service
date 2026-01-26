@@ -119,7 +119,7 @@ const config: HardhatUserConfig = {
     radiusTestnet: {
       url: process.env.RADIUS_TESTNET_RPC_URL || "",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 1223953
+      chainId: 72344
     }
   },
   etherscan: {
@@ -143,10 +143,10 @@ const config: HardhatUserConfig = {
       },
       {
         network: "radiusTestnet",
-        chainId: 1223953,
+        chainId: 72344,
         urls: {
-          apiURL: "https://api-sepolia.basescan.org/api",
-          browserURL: "https://testnet.radius.xyz"
+          apiURL: "https://explorer.testnet.radiustech.xyz/api",
+          browserURL: "https://explorer.testnet.radiustech.xyz"
         }
       }
     ]
