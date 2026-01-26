@@ -6,7 +6,7 @@ Currently, the service supports v0.7 of the Account Abstraction standard. The pa
 
 - Base Sepolia (EntryPoint: `0x0000000071727De22E5E9d8BAf0edAc6f37da032`)
 - Base Mainnet (EntryPoint: `0x0000000071727De22E5E9d8BAf0edAc6f37da032`)
-- Radius Testnet (EntryPoint: `0x9b443e4bd122444852B52331f851a000164Cc83F`)
+- Radius Testnet (EntryPoint: `0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F`)
 
 **Note:** Radius Testnet uses a custom EntryPoint deployment, not the canonical v0.7 address.
 
@@ -78,7 +78,7 @@ npm run fund-radius
 DEPOSIT_AMOUNT=1 npm run fund-radius
 ```
 
-These scripts use the `PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET` environment variable and the custom Radius EntryPoint (`0x9b443e4bd122444852B52331f851a000164Cc83F`).
+These scripts use the `PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET` environment variable and the custom Radius EntryPoint (`0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F`).
 
 ## Development Frameworks
 
