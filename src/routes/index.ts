@@ -31,13 +31,14 @@ interface CustomRouteGenericParam {
   Params: IParams;
 }
 
-type SupportedChain = "base" | "baseSepolia" | "radiusTestnet";
+type SupportedChain = "base" | "baseSepolia" | "radiusTestnet" | "radius";
 
 // Centralized per-chain paymaster address configuration, validated at startup
 const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
   base: process.env.PAYMASTER_PROXY_ADDRESS as Address,
   baseSepolia: process.env.PAYMASTER_PROXY_ADDRESS as Address,
   radiusTestnet: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET as Address,
+  radius: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS as Address,
 };
 
 // Validate env configuration (fail fast with precise messages)
@@ -45,6 +46,7 @@ const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
   const missing: string[] = [];
   if (!process.env.PAYMASTER_PROXY_ADDRESS) missing.push("PAYMASTER_PROXY_ADDRESS");
   if (!process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET) missing.push("PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET");
+  if (!process.env.PAYMASTER_PROXY_ADDRESS_RADIUS) missing.push("PAYMASTER_PROXY_ADDRESS_RADIUS");
   if (missing.length) {
     const error = new Error(`Missing environment variables: ${missing.join(", ")}`);
     Sentry.captureException(error);
@@ -55,6 +57,7 @@ const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
   const candidates: Array<{ key: string; value: string | undefined }> = [
     { key: "PAYMASTER_PROXY_ADDRESS", value: process.env.PAYMASTER_PROXY_ADDRESS },
     { key: "PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET", value: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET },
+    { key: "PAYMASTER_PROXY_ADDRESS_RADIUS", value: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS },
   ];
   const invalid = candidates.filter(({ value }) => !value || !isAddress(value as Address));
   if (invalid.length) {
