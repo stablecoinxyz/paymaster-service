@@ -24,7 +24,24 @@ const radiusTestnet = {
   },
 };
 
+// Radius Mainnet chain
+const radius = {
+  id: 723,
+  name: "Radius",
+  network: "radius",
+  nativeCurrency: { name: "Radius", symbol: "USD", decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ["https://rpc.radiustech.xyz"],
+    },
+    public: {
+      http: ["https://rpc.radiustech.xyz"],
+    },
+  },
+};
+
 export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F";
+export const ENTRYPOINT_ADDRESS_V07_RADIUS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
 
 /**
  * Returns the correct EntryPoint address for the given chain.
@@ -34,6 +51,9 @@ export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0xfA15FF1e8e3a66737fb161e4
 export const getEntryPointAddress = (chain: string): `0x${string}` => {
   if (chain === "radiusTestnet") {
     return ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET;
+  }
+  if (chain === "radius") {
+    return ENTRYPOINT_ADDRESS_V07_RADIUS;
   }
   // For all other chains, use the canonical v0.7 EntryPoint
   // This is imported from permissionless/utils in the calling code
@@ -57,10 +77,11 @@ export const maxBigInt = (a: bigint, b: bigint) => {
  */
 export const isChainSupported = (chain: string) => {
   return (
-    chain === "baseSepolia" || 
-    chain === "base" || 
+    chain === "baseSepolia" ||
+    chain === "base" ||
     chain === "radiusTestnet" ||
-    chain === "localhost" || 
+    chain === "radius" ||
+    chain === "localhost" ||
     chain === "hardhat"
   );
 };
@@ -77,6 +98,8 @@ export const getChain = (chain: string): Chain => {
     return base;
   } else if (chain === "radiusTestnet") {
     return radiusTestnet;
+  } else if (chain === "radius") {
+    return radius;
   } else if (chain === "localhost") {
     return localhost;
   } else if (chain === "hardhat") {
@@ -141,6 +164,8 @@ export const getRPCUrl = (chain: string) => {
     return process.env.BASE_RPC_URL;
   } else if (chain === "radiusTestnet") {
     return process.env.RADIUS_TESTNET_RPC_URL;
+  } else if (chain === "radius") {
+    return process.env.RADIUS_RPC_URL;
   } else if (chain === "localhost" || chain === "hardhat") {
     return process.env.LOCALHOST_RPC_URL;
   }
@@ -159,6 +184,8 @@ export const getBundlerUrl = (chain: string) => {
     return process.env.BASE_BUNDLER_URL;
   } else if (chain === "radiusTestnet") {
     return process.env.RADIUS_TESTNET_BUNDLER_URL;
+  } else if (chain === "radius") {
+    return process.env.RADIUS_BUNDLER_URL;
   } else if (chain === "localhost" || chain === "hardhat") {
     return process.env.LOCALHOST_BUNDLER_URL;
   }
@@ -177,6 +204,8 @@ export const getScannerUrl = (chain: string) => {
     return "https://basescan.org";
   } else if (chain === "radiusTestnet") {
     return "https://explorer.testnet.radiustech.xyz";
+  } else if (chain === "radius") {
+    return "https://explorer.radiustech.xyz";
   } else if (chain === "localhost" || chain === "hardhat") {
     return "http://localhost:8545";
   }

@@ -120,6 +120,11 @@ const config: HardhatUserConfig = {
       url: process.env.RADIUS_TESTNET_RPC_URL || "",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 72344
+    },
+    radius: {
+      url: process.env.RADIUS_RPC_URL || "",
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 723
     }
   },
   etherscan: {
@@ -131,6 +136,7 @@ const config: HardhatUserConfig = {
       base: process.env.BASESCAN_API_KEY || "",
       baseSepolia: process.env.BASESCAN_API_KEY || "",
       radiusTestnet: process.env.RADIUS_TESTNET_API_KEY || "",
+      radius: process.env.RADIUS_API_KEY || "",
     },
     customChains: [
       {
@@ -147,6 +153,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://explorer.testnet.radiustech.xyz/api",
           browserURL: "https://explorer.testnet.radiustech.xyz"
+        }
+      },
+      {
+        network: "radius",
+        chainId: 723,
+        urls: {
+          apiURL: "https://explorer.radiustech.xyz/api",
+          browserURL: "https://explorer.radiustech.xyz"
         }
       }
     ]
