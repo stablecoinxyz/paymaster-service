@@ -41,7 +41,7 @@ const radius = {
 };
 
 export const ENTRYPOINT_ADDRESS_V07_RADIUS_TESTNET = "0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F";
-export const ENTRYPOINT_ADDRESS_V07_RADIUS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+export const ENTRYPOINT_ADDRESS_V07_RADIUS = "0xfA15FF1e8e3a66737fb161e4f9Fa8935daD7B04F";
 
 /**
  * Returns the correct EntryPoint address for the given chain.
