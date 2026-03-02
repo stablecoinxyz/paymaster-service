@@ -203,9 +203,9 @@ export const getScannerUrl = (chain: string) => {
   } else if (chain === "base") {
     return "https://basescan.org";
   } else if (chain === "radiusTestnet") {
-    return "https://explorer.testnet.radiustech.xyz";
+    return "https://testnet.radiustech.xyz";
   } else if (chain === "radius") {
-    return "https://explorer.radiustech.xyz";
+    return "https://network.radiustech.xyz";
   } else if (chain === "localhost" || chain === "hardhat") {
     return "http://localhost:8545";
   }

@@ -151,16 +151,16 @@ const config: HardhatUserConfig = {
         network: "radiusTestnet",
         chainId: 72344,
         urls: {
-          apiURL: "https://explorer.testnet.radiustech.xyz/api",
-          browserURL: "https://explorer.testnet.radiustech.xyz"
+          apiURL: "https://testnet.radiustech.xyz/api",
+          browserURL: "https://testnet.radiustech.xyz"
         }
       },
       {
         network: "radius",
         chainId: 723,
         urls: {
-          apiURL: "https://explorer.radiustech.xyz/api",
-          browserURL: "https://explorer.radiustech.xyz"
+          apiURL: "https://network.radiustech.xyz/api",
+          browserURL: "https://network.radiustech.xyz"
         }
       }
     ]
