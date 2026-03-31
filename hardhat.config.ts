@@ -124,7 +124,7 @@ const config: HardhatUserConfig = {
     radius: {
       url: process.env.RADIUS_RPC_URL || "",
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 723
+      chainId: 723487
     }
   },
   etherscan: {
@@ -157,7 +157,7 @@ const config: HardhatUserConfig = {
       },
       {
         network: "radius",
-        chainId: 723,
+        chainId: 723487,
         urls: {
           apiURL: "https://network.radiustech.xyz/api",
           browserURL: "https://network.radiustech.xyz"

@@ -26,7 +26,7 @@ const radiusTestnet = {
 
 // Radius Mainnet chain
 const radius = {
-  id: 723,
+  id: 723487,
   name: "Radius",
   network: "radius",
   nativeCurrency: { name: "Radius", symbol: "USD", decimals: 18 },
