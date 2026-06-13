@@ -2,8 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { formatEther, getAddress, Address, getContract, http, createPublicClient, Hex } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
 import { ENTRYPOINT_V07_ABI } from "../../src/helpers/abi";
-import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
-import { getChain, getDeployerWalletClient, getRPCUrl } from "../../src/helpers/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getEntryPointAddress } from "../../src/helpers/utils";
 
 dotenvConfig();
 
@@ -53,9 +52,9 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
       paymaster.read.maxAllowedGasCost([]) as Promise<bigint>
     ]);
 
-    // Get balance information
+    // Get balance information (use the chain-specific EntryPoint, e.g. custom on Radius)
     const entryPointContract = getContract({
-      address: ENTRYPOINT_ADDRESS_V07,
+      address: getEntryPointAddress(chain),
       abi: ENTRYPOINT_V07_ABI,
       client: deployer,
     });
