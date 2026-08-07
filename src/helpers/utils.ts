@@ -152,24 +152,59 @@ export const getTrustedSignerWalletClient = (chain: string) => {
   });
 };
 
+// Names of the environment variables holding each chain's RPC and bundler URL.
+// Kept as maps so callers can report the exact variable that is missing.
+const RPC_URL_ENV_VARS: Record<string, string> = {
+  baseSepolia: "BASE_SEPOLIA_RPC_URL",
+  base: "BASE_RPC_URL",
+  radiusTestnet: "RADIUS_TESTNET_RPC_URL",
+  radius: "RADIUS_RPC_URL",
+  localhost: "LOCALHOST_RPC_URL",
+  hardhat: "LOCALHOST_RPC_URL",
+};
+
+const BUNDLER_URL_ENV_VARS: Record<string, string> = {
+  baseSepolia: "BASE_SEPOLIA_BUNDLER_URL",
+  base: "BASE_BUNDLER_URL",
+  radiusTestnet: "RADIUS_TESTNET_BUNDLER_URL",
+  radius: "RADIUS_BUNDLER_URL",
+  localhost: "LOCALHOST_BUNDLER_URL",
+  hardhat: "LOCALHOST_BUNDLER_URL",
+};
+
+/**
+ * Returns the name of the environment variable holding the RPC URL for the given chain.
+ * @param chain The name of the chain to use.
+ * @returns The environment variable name.
+ */
+export const getRPCUrlEnvVar = (chain: string) => {
+  const envVar = RPC_URL_ENV_VARS[chain];
+  if (!envVar) {
+    throw new Error(`Unsupported chain: ${chain}`);
+  }
+  return envVar;
+};
+
+/**
+ * Returns the name of the environment variable holding the bundler URL for the given chain.
+ * @param chain The name of the chain to use.
+ * @returns The environment variable name.
+ */
+export const getBundlerUrlEnvVar = (chain: string) => {
+  const envVar = BUNDLER_URL_ENV_VARS[chain];
+  if (!envVar) {
+    throw new Error(`Unsupported chain: ${chain}`);
+  }
+  return envVar;
+};
+
 /**
  * Returns the RPC URL for the given chain.
  * @param chain The name of the chain to use.
  * @returns The RPC URL.
  */
 export const getRPCUrl = (chain: string) => {
-  if (chain === "baseSepolia") {
-    return process.env.BASE_SEPOLIA_RPC_URL;
-  } else if (chain === "base") {
-    return process.env.BASE_RPC_URL;
-  } else if (chain === "radiusTestnet") {
-    return process.env.RADIUS_TESTNET_RPC_URL;
-  } else if (chain === "radius") {
-    return process.env.RADIUS_RPC_URL;
-  } else if (chain === "localhost" || chain === "hardhat") {
-    return process.env.LOCALHOST_RPC_URL;
-  }
-  throw new Error(`Unsupported chain: ${chain}`);
+  return process.env[getRPCUrlEnvVar(chain)];
 };
 
 /**
@@ -178,18 +213,7 @@ export const getRPCUrl = (chain: string) => {
  * @returns The bundler URL.
  */
 export const getBundlerUrl = (chain: string) => {
-  if (chain === "baseSepolia") {
-    return process.env.BASE_SEPOLIA_BUNDLER_URL;
-  } else if (chain === "base") {
-    return process.env.BASE_BUNDLER_URL;
-  } else if (chain === "radiusTestnet") {
-    return process.env.RADIUS_TESTNET_BUNDLER_URL;
-  } else if (chain === "radius") {
-    return process.env.RADIUS_BUNDLER_URL;
-  } else if (chain === "localhost" || chain === "hardhat") {
-    return process.env.LOCALHOST_BUNDLER_URL;
-  }
-  throw new Error(`Unsupported chain: ${chain}`);
+  return process.env[getBundlerUrlEnvVar(chain)];
 };
 
 /**

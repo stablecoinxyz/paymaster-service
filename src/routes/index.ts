@@ -9,7 +9,7 @@ import cors from "@fastify/cors";
 import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
 import { createPimlicoBundlerClient } from "permissionless/clients/pimlico";
 import { Address, getContract, http, isAddress } from "viem";
-import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, isChainSupported, getEntryPointAddress } from "../helpers/utils";
+import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, getRPCUrlEnvVar, getBundlerUrlEnvVar, isChainSupported, getEntryPointAddress } from "../helpers/utils";
 import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 import { createSbcRpcHandler } from "../relay";
 import * as Sentry from "@sentry/node";
@@ -32,6 +32,8 @@ interface CustomRouteGenericParam {
 }
 
 type SupportedChain = "base" | "baseSepolia" | "radiusTestnet" | "radius";
+
+const SUPPORTED_CHAINS: SupportedChain[] = ["base", "baseSepolia", "radiusTestnet", "radius"];
 
 // Centralized per-chain paymaster address configuration, validated at startup
 const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
@@ -63,6 +65,18 @@ const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
   if (invalid.length) {
     const detail = invalid.map(({ key, value }) => `${key}=${value ?? "<undefined>"}`).join(", ");
     const error = new Error(`Invalid address in environment: ${detail}`);
+    Sentry.captureException(error);
+    throw error;
+  }
+
+  // Validate every chain's RPC and bundler URL here rather than on first request,
+  // so a misconfigured deployment fails to start instead of serving 500s to users.
+  const missingUrls = SUPPORTED_CHAINS.flatMap((chain) => [
+    ...(getRPCUrl(chain) ? [] : [getRPCUrlEnvVar(chain)]),
+    ...(getBundlerUrl(chain) ? [] : [getBundlerUrlEnvVar(chain)]),
+  ]);
+  if (missingUrls.length) {
+    const error = new Error(`Missing environment variables: ${missingUrls.join(", ")}`);
     Sentry.captureException(error);
     throw error;
   }
@@ -155,10 +169,15 @@ const setupHandler = async (chain: string) => {
   }
 };
 
-// Public accessor with memoization (cached handlers)
+// Public accessor with memoization (cached handlers).
+// Only successful setups are cached: a failed one evicts itself so a transient
+// RPC or network problem doesn't brick the chain until the service is redeployed.
 const getRpcHandler = (chain: string) => {
   if (!handlerCache[chain]) {
-    handlerCache[chain] = setupHandler(chain);
+    handlerCache[chain] = setupHandler(chain).catch((error) => {
+      delete handlerCache[chain];
+      throw error;
+    });
   }
   return handlerCache[chain];
 };
@@ -201,7 +220,7 @@ const routes: FastifyPluginAsync = async (server) => {
               if (!isChainSupported(chain)) {
                 const errorMessage = `Chain (${chain}) is not supported`;
                 Sentry.captureMessage(errorMessage, "error");
-                res.status(400).send({
+                return res.status(400).send({
                   error: errorMessage
                 });
               }
