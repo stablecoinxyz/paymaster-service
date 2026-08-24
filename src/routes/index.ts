@@ -12,6 +12,7 @@ import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPC
 import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 import { createSbcRpcHandler } from "../relay";
 import * as Sentry from "@sentry/node";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { EntryPoint } from "permissionless/types/entrypoint";
 
 interface IQueryString {
@@ -50,6 +51,12 @@ const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = (() => {
 
 // Validate env configuration (fail fast with precise messages)
 (() => {
+  if (!process.env.PAYMASTER_SHARED_SECRET) {
+    const error = new Error("Missing environment variables: PAYMASTER_SHARED_SECRET");
+    Sentry.captureException(error);
+    throw error;
+  }
+
   // Validate every chain's RPC and bundler URL here rather than on first request,
   // so a misconfigured deployment fails to start instead of serving 500s to users.
   const missingUrls = SUPPORTED_CHAINS.flatMap((chain) => [
@@ -163,6 +170,21 @@ const getRpcHandler = (chain: string) => {
   return handlerCache[chain];
 };
 
+const SHARED_SECRET_HEADER = "x-paymaster-secret";
+
+/**
+ * Constant-time comparison of the caller's shared secret against ours.
+ * Both sides are hashed first so the comparison is over equal-length buffers and
+ * does not reveal the secret's length.
+ */
+const isAuthorized = (presented: string | undefined): boolean => {
+  if (!presented) return false;
+  const expected = process.env.PAYMASTER_SHARED_SECRET as string;
+  const a = createHash("sha256").update(presented).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+};
+
 const routes: FastifyPluginAsync = async (server) => {
   server.register(cors, {
     origin: "*",
@@ -191,6 +213,15 @@ const routes: FastifyPluginAsync = async (server) => {
 
       instance.register(
         async (chainInstance: FastifyInstance) => {
+          // Only the proxy may reach the sponsorship endpoints. Health routes
+          // above stay open so platform health checks keep working.
+          chainInstance.addHook("preHandler", async (req: FastifyRequest, res: FastifyReply) => {
+            const presented = req.headers[SHARED_SECRET_HEADER];
+            if (!isAuthorized(typeof presented === "string" ? presented : undefined)) {
+              return res.status(401).send({ error: "Unauthorized" });
+            }
+          });
+
           chainInstance.post(
             "/v1/:chain",
             async (
