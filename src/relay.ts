@@ -364,6 +364,39 @@ const handleSbcMethod = async (
   );
 };
 
+// Strips anything URL-shaped, in case a message embeds an endpoint.
+const stripUrls = (text: string) =>
+  text.replace(/\b[a-z][a-z0-9+.-]*:\/\/\S+/gi, "[redacted]");
+
+/**
+ * Builds the JSON-RPC error returned to the caller.
+ *
+ * Messages we author ourselves (RpcError) are safe and passed through, so clients
+ * still see the real reason. Anything else is reduced to its first line, which for
+ * a viem error is the short message without the metaMessages block that carries
+ * "URL: <endpoint>". Data is forwarded only when it is plain hex revert data.
+ */
+const toClientError = (err: unknown) => {
+  // biome-ignore lint/suspicious/noExplicitAny:
+  const anyErr = err as any;
+  const code = typeof anyErr?.code === "number" ? anyErr.code : -32603;
+  const data = typeof anyErr?.data === "string" && /^0x[0-9a-fA-F]*$/.test(anyErr.data)
+    ? anyErr.data
+    : undefined;
+
+  if (err instanceof RpcError) {
+    return { code, message: stripUrls(err.message), data };
+  }
+
+  const raw = typeof anyErr?.message === "string" ? anyErr.message : "";
+  const firstLine = raw.split("\n")[0].trim();
+  return {
+    code,
+    message: firstLine ? stripUrls(firstLine) : "Internal error",
+    data,
+  };
+};
+
 export const createSbcRpcHandler = (
   altoBundlerV07: PimlicoBundlerClient<any>,
   paymasterV07: GetContractReturnType<
@@ -396,21 +429,15 @@ export const createSbcRpcHandler = (
         result,
       };
     } catch (err: unknown) {
-      console.log(`JSON.stringify(err): ${util.inspect(err)}`);
-
-      const error = {
-        // biome-ignore lint/suspicious/noExplicitAny:
-        message: (err as any).message,
-        // biome-ignore lint/suspicious/noExplicitAny:
-        data: (err as any).data,
-        // biome-ignore lint/suspicious/noExplicitAny:
-        code: (err as any).code ?? -32603,
-      };
+      // Full detail is logged server-side ONLY. Never echo a raw error message to
+      // the caller: viem embeds the un-redacted upstream URL in its message text
+      // (metaMessages), so forwarding it can leak a bundler or RPC API key.
+      console.error(`RPC handler error: ${util.inspect(err)}`);
 
       return {
         jsonrpc: "2.0",
         id: parsedBody.data.id,
-        error,
+        error: toClientError(err),
       };
     }
   };
