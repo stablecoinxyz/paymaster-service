@@ -3,12 +3,13 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Script.sol";
 import "../contracts/SignatureVerifyingPaymasterV07.sol";
+import "./PaymasterAddresses.sol";
 import "@account-abstraction/contracts/interfaces/IEntryPoint.sol";
 
 contract CheckStatusScript is Script {
     function run() external view {
         // Load environment variables
-        address proxyAddress = vm.envAddress("PROXY_ADDRESS");
+        address proxyAddress = PaymasterAddresses.proxy();
         
         // Get paymaster contract
         SignatureVerifyingPaymasterV07 paymaster = SignatureVerifyingPaymasterV07(payable(proxyAddress));

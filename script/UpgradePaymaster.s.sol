@@ -3,6 +3,7 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Script.sol";
 import "../contracts/SignatureVerifyingPaymasterV07.sol";
+import "./PaymasterAddresses.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 contract UpgradePaymasterScript is Script {
@@ -10,7 +11,7 @@ contract UpgradePaymasterScript is Script {
         // Load environment variables
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address entryPointAddress = vm.envAddress("ENTRY_POINT_V07_ADDRESS");
-        address proxyAddress = vm.envAddress("PROXY_ADDRESS");
+        address proxyAddress = PaymasterAddresses.proxy();
         
         // Start broadcasting transactions
         vm.startBroadcast(deployerPrivateKey);

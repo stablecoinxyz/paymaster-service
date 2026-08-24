@@ -1,7 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { parseEther, formatEther, getAddress, Address, createPublicClient, http } from 'viem';
+import { parseEther, formatEther, getAddress, Address, createPublicClient, getContract, http } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
-import { getChain, getDeployerWalletClient, getRPCUrl } from "../../src/helpers/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getPaymasterProxyAddress } from "../../src/helpers/utils";
+import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 dotenvConfig();
 
@@ -18,10 +19,8 @@ export async function main(hre: HardhatRuntimeEnvironment, newGasLimitEth: strin
     }
     
     // Get the proxy address from environment
-    const proxyAddress = process.env.PROXY_ADDRESS;
-    if (!proxyAddress || !isValidAddress(proxyAddress)) {
-      throw new Error('Invalid or missing PROXY_ADDRESS in .env file');
-    }
+    // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+    const proxyAddress = getPaymasterProxyAddress(chain);
 
     const newGasLimitWei = parseEther(newGasLimitEth);
 
@@ -39,7 +38,11 @@ export async function main(hre: HardhatRuntimeEnvironment, newGasLimitEth: strin
     console.log(`Using account: ${deployerAddress}`);
 
     // Get the paymaster contract
-    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = getContract({
+      address: proxyAddress,
+      abi: SBC_PAYMASTER_V07_ABI,
+      client: { public: publicClient, wallet: deployer },
+    });
 
     // Check if the deployer is the owner
     const owner = await paymaster.read.owner([]) as Address;

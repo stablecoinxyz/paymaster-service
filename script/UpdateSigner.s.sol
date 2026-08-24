@@ -3,12 +3,13 @@ pragma solidity ^0.8.23;
 
 import "forge-std/Script.sol";
 import "../contracts/SignatureVerifyingPaymasterV07.sol";
+import "./PaymasterAddresses.sol";
 
 contract UpdateSignerScript is Script {
     function run() external {
         // Load environment variables
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
-        address proxyAddress = vm.envAddress("PROXY_ADDRESS");
+        address proxyAddress = PaymasterAddresses.proxy();
         
         // Get new signer address from command line
         address newSigner = vm.envAddress("TRUSTED_SIGNER");

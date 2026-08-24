@@ -9,9 +9,9 @@ import {
   getContract, 
 } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
-import { getChain, getDeployerWalletClient, getRPCUrl } from "../../src/helpers/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getPaymasterProxyAddress, getEntryPointAddress } from "../../src/helpers/utils";
 import { ENTRYPOINT_V07_ABI } from "../../src/helpers/abi";
-import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
+import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 dotenvConfig();
 
@@ -25,11 +25,8 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   try {
     const chain = hre.network.name;
 
-    // Get the proxy address from environment
-    const proxyAddress = process.env.PROXY_ADDRESS;
-    if (!proxyAddress || !isValidAddress(proxyAddress)) {
-      throw new Error('Invalid or missing PROXY_ADDRESS in .env file');
-    }
+    // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+    const proxyAddress = getPaymasterProxyAddress(chain);
 
     const depositAmountWei = parseEther(depositAmount);
 
@@ -48,12 +45,16 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
     console.log(`Using account: ${deployerAddress}`);
 
     // Get the contract
-    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = getContract({
+      address: proxyAddress,
+      abi: SBC_PAYMASTER_V07_ABI,
+      client: { public: publicClient, wallet: deployer },
+    });
 
     // Get the entry point contract
     const entryPointAddress = await paymaster.read.entryPoint([]) as Address;
     const entryPointContract = getContract({
-      address: ENTRYPOINT_ADDRESS_V07,
+      address: getEntryPointAddress(chain),
       abi: ENTRYPOINT_V07_ABI,
       client: deployer,
     });

@@ -6,10 +6,9 @@ import {
   FastifyServerOptions,
 } from "fastify";
 import cors from "@fastify/cors";
-import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
 import { createPimlicoBundlerClient } from "permissionless/clients/pimlico";
-import { Address, getContract, http, isAddress } from "viem";
-import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, getRPCUrlEnvVar, getBundlerUrlEnvVar, isChainSupported, getEntryPointAddress } from "../helpers/utils";
+import { Address, getContract, http } from "viem";
+import { getDeployerWalletClient, getChain, getTrustedSignerWalletClient, getRPCUrl, getBundlerUrl, getRPCUrlEnvVar, getBundlerUrlEnvVar, getPaymasterProxyAddress, isChainSupported, getEntryPointAddress } from "../helpers/utils";
 import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 import { createSbcRpcHandler } from "../relay";
 import * as Sentry from "@sentry/node";
@@ -35,40 +34,22 @@ type SupportedChain = "base" | "baseSepolia" | "radiusTestnet" | "radius";
 
 const SUPPORTED_CHAINS: SupportedChain[] = ["base", "baseSepolia", "radiusTestnet", "radius"];
 
-// Centralized per-chain paymaster address configuration, validated at startup
-const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = {
-  base: process.env.PAYMASTER_PROXY_ADDRESS as Address,
-  baseSepolia: process.env.PAYMASTER_PROXY_ADDRESS as Address,
-  radiusTestnet: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET as Address,
-  radius: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS as Address,
-};
+// Centralized per-chain paymaster address configuration, validated at startup.
+// getPaymasterProxyAddress is the single source of truth shared with the admin
+// tasks, and throws a precise error for a missing or malformed address.
+const PAYMASTER_ADDRESSES: Record<SupportedChain, Address> = (() => {
+  try {
+    return Object.fromEntries(
+      SUPPORTED_CHAINS.map((chain) => [chain, getPaymasterProxyAddress(chain)])
+    ) as Record<SupportedChain, Address>;
+  } catch (error) {
+    Sentry.captureException(error);
+    throw error;
+  }
+})();
 
 // Validate env configuration (fail fast with precise messages)
 (() => {
-  const missing: string[] = [];
-  if (!process.env.PAYMASTER_PROXY_ADDRESS) missing.push("PAYMASTER_PROXY_ADDRESS");
-  if (!process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET) missing.push("PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET");
-  if (!process.env.PAYMASTER_PROXY_ADDRESS_RADIUS) missing.push("PAYMASTER_PROXY_ADDRESS_RADIUS");
-  if (missing.length) {
-    const error = new Error(`Missing environment variables: ${missing.join(", ")}`);
-    Sentry.captureException(error);
-    throw error;
-  }
-
-  // Address format validation
-  const candidates: Array<{ key: string; value: string | undefined }> = [
-    { key: "PAYMASTER_PROXY_ADDRESS", value: process.env.PAYMASTER_PROXY_ADDRESS },
-    { key: "PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET", value: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET },
-    { key: "PAYMASTER_PROXY_ADDRESS_RADIUS", value: process.env.PAYMASTER_PROXY_ADDRESS_RADIUS },
-  ];
-  const invalid = candidates.filter(({ value }) => !value || !isAddress(value as Address));
-  if (invalid.length) {
-    const detail = invalid.map(({ key, value }) => `${key}=${value ?? "<undefined>"}`).join(", ");
-    const error = new Error(`Invalid address in environment: ${detail}`);
-    Sentry.captureException(error);
-    throw error;
-  }
-
   // Validate every chain's RPC and bundler URL here rather than on first request,
   // so a misconfigured deployment fails to start instead of serving 500s to users.
   const missingUrls = SUPPORTED_CHAINS.flatMap((chain) => [

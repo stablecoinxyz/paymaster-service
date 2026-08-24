@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { 
-  createPublicClient, 
+  createPublicClient, getContract, 
   http, 
   getAddress, 
   Address, 
@@ -12,7 +12,8 @@ import {
   keccak256,
 } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
-import { getChain, getDeployerWalletClient, getRPCUrl } from "../../src/helpers/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getPaymasterProxyAddress } from "../../src/helpers/utils";
+import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 dotenvConfig();
 
@@ -262,10 +263,11 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   console.log(`Proxy deployed to: ${proxyAddress}`);
   
   // Get the proxy contract with the paymaster ABI
-  const paymaster = await hre.viem.getContractAt(
-    'contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07',
-    proxyAddress as Address,
-  );
+  const paymaster = getContract({
+    address: proxyAddress as Address,
+    abi: SBC_PAYMASTER_V07_ABI,
+    client: { public: publicClient, wallet: deployer },
+  });
 
   // Sleep for 5 seconds
   await new Promise(resolve => setTimeout(resolve, 5000));
@@ -297,10 +299,8 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
 export async function upgrade(hre: HardhatRuntimeEnvironment): Promise<void> {
   const chain = hre.network.name;
 
-  const PROXY_ADDRESS = process.env.PROXY_ADDRESS as Address;
-  if (!PROXY_ADDRESS || !isValidAddress(PROXY_ADDRESS)) {
-    throw new Error('PROXY_ADDRESS is required in environment variables');
-  }
+  // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+  const PROXY_ADDRESS = getPaymasterProxyAddress(chain);
 
   console.log('Upgrading paymaster implementation...');
   console.log(`Proxy address: ${PROXY_ADDRESS}`);

@@ -1,9 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { parseEther, formatEther, getAddress, Address, http, createPublicClient, createWalletClient, getContract } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
-import { getChain, getDeployerWalletClient, getRPCUrl } from "../../src/helpers/utils";
-import { ENTRYPOINT_ADDRESS_V07 } from "permissionless/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getPaymasterProxyAddress, getEntryPointAddress } from "../../src/helpers/utils";
 import { ENTRYPOINT_V07_ABI } from "../../src/helpers/abi";
+import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 dotenvConfig();
 
@@ -14,11 +14,8 @@ export async function main(hre: HardhatRuntimeEnvironment, amount: string = '0.0
   try {
     const chain = hre.network.name;
 
-    // Get the proxy address from environment
-    const proxyAddress = process.env.PROXY_ADDRESS;
-    if (!proxyAddress || !isValidAddress(proxyAddress)) {
-      throw new Error('Invalid or missing PROXY_ADDRESS in .env file');
-    }
+    // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+    const proxyAddress = getPaymasterProxyAddress(chain);
 
     // Parse the withdrawal amount
     const withdrawAmount = amount;
@@ -37,7 +34,11 @@ export async function main(hre: HardhatRuntimeEnvironment, amount: string = '0.0
     console.log(`Amount to withdraw: ${withdrawAmount} ETH`);
 
     // Get the contract
-    const paymaster = await hre.viem.getContractAt('contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', proxyAddress as Address);
+    const paymaster = getContract({
+      address: proxyAddress,
+      abi: SBC_PAYMASTER_V07_ABI,
+      client: { public: publicClient, wallet: deployer },
+    });
 
     // Check if the deployer is the owner
     const owner = await paymaster.read.owner([]) as Address;
@@ -51,7 +52,7 @@ export async function main(hre: HardhatRuntimeEnvironment, amount: string = '0.0
 
     // Get current deposit info 
     const entryPointContract = getContract({
-      address: ENTRYPOINT_ADDRESS_V07,
+      address: getEntryPointAddress(chain),
       abi: ENTRYPOINT_V07_ABI,
       client: deployer,
     }); 

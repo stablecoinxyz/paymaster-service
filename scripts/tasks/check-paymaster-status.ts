@@ -2,7 +2,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { formatEther, getAddress, Address, getContract, http, createPublicClient, Hex } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
 import { ENTRYPOINT_V07_ABI } from "../../src/helpers/abi";
-import { getChain, getDeployerWalletClient, getRPCUrl, getEntryPointAddress } from "../../src/helpers/utils";
+import { getChain, getDeployerWalletClient, getRPCUrl, getEntryPointAddress, getPaymasterProxyAddress } from "../../src/helpers/utils";
+import { abi as SBC_PAYMASTER_V07_ABI } from "../../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 dotenvConfig();
 
@@ -13,11 +14,8 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   try { 
     const chain = hre.network.name;
 
-    // Get the proxy address from environment
-    const proxyAddress = process.env.PROXY_ADDRESS;
-    if (!proxyAddress || !isValidAddress(proxyAddress)) {
-      throw new Error('Invalid or missing PROXY_ADDRESS in .env file');
-    }
+    // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+    const proxyAddress = getPaymasterProxyAddress(chain);
 
     console.log(`Checking paymaster at address: ${proxyAddress}`);
 
@@ -30,10 +28,11 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
     console.log(`Connected to network: ${await publicClient.getChainId()}`);
 
     // Get the contract
-    const paymaster = await hre.viem.getContractAt(
-      'contracts/SignatureVerifyingPaymasterV07.sol:SignatureVerifyingPaymasterV07', 
-      proxyAddress as Address
-    );
+    const paymaster = getContract({
+      address: proxyAddress,
+      abi: SBC_PAYMASTER_V07_ABI,
+      client: publicClient,
+    });
 
     // Get the implementation address (using storage slot for ERC1967)
     const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
@@ -70,20 +69,21 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
 
     // Check if the contract has any version information
     try {
-      const [version, domainSeparator, domainName, domainVersion] = await Promise.all([
+      // getDomainName/getDomainVersion are not on this contract; eip712Domain is the
+      // standard accessor and returns (fields, name, version, chainId, ...).
+      const [version, domainSeparator, eip712Domain] = await Promise.all([
         paymaster.read.VERSION(),
         paymaster.read.domainSeparator(),
-        paymaster.read.getDomainName(),
-        paymaster.read.getDomainVersion()
-      ]);
-      
+        paymaster.read.eip712Domain()
+      ]) as [bigint, Hex, readonly unknown[]];
+
       console.log(`\nContract version: ${version}`);
       console.log(`\nEIP712 Information:`);
-      console.log(`Domain Name: ${domainName}`);
-      console.log(`Domain Version: ${domainVersion}`);
+      console.log(`Domain Name: ${eip712Domain[1]}`);
+      console.log(`Domain Version: ${eip712Domain[2]}`);
       console.log(`Domain Separator: ${domainSeparator}`);
     } catch (error) {
-      console.log('\nContract version: Not available (V1)');
+      console.log(`\nContract version: unavailable (${error instanceof Error ? error.message.split('\n')[0] : 'unknown error'})`);
     }
 
     // If paymaster has insufficient deposit, provide a warning

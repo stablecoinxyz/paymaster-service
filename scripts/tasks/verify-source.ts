@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { getAddress, Address } from 'viem';
+import { getAddress, Address, createPublicClient, http } from 'viem';
 import { config as dotenvConfig } from 'dotenv';
-import { getScannerUrl } from "../../src/helpers/utils";
+import { getScannerUrl, getChain, getRPCUrl, getPaymasterProxyAddress } from "../../src/helpers/utils";
 
 dotenvConfig();
 
@@ -12,14 +12,14 @@ export async function main(hre: HardhatRuntimeEnvironment): Promise<void> {
   try {
     const chain = hre.network.name;
 
-    // Get the proxy address from environment
-    const proxyAddress = process.env.PROXY_ADDRESS;
-    if (!proxyAddress || !isValidAddress(proxyAddress)) {
-      throw new Error('Invalid or missing PROXY_ADDRESS in .env file');
-    }
+    // Per-chain lookup: PROXY_ADDRESS holds one address and is wrong on other networks.
+    const proxyAddress = getPaymasterProxyAddress(chain);
 
     // Get the implementation address using the ERC1967 storage slot
-    const publicClient = await hre.viem.getPublicClient();
+    const publicClient = createPublicClient({
+      chain: getChain(chain),
+      transport: http(getRPCUrl(chain)),
+    });
     const implementationSlot = '0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc';
     const implAddressData = await publicClient.getStorageAt({
       address: proxyAddress as Address,

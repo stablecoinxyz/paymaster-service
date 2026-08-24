@@ -60,6 +60,43 @@ export const getEntryPointAddress = (chain: string): `0x${string}` => {
   return "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as `0x${string}`;
 };
 
+// Names of the environment variables holding each chain's paymaster proxy address.
+// Radius mainnet and testnet share a deployment address but are kept separate so
+// they can diverge without touching callers.
+const PAYMASTER_PROXY_ENV_VARS: Record<string, string> = {
+  base: "PAYMASTER_PROXY_ADDRESS",
+  baseSepolia: "PAYMASTER_PROXY_ADDRESS",
+  radiusTestnet: "PAYMASTER_PROXY_ADDRESS_RADIUS_TESTNET",
+  radius: "PAYMASTER_PROXY_ADDRESS_RADIUS",
+};
+
+/**
+ * Returns the paymaster proxy address for the given chain.
+ *
+ * Always use this instead of reading PROXY_ADDRESS directly: that variable holds a
+ * single address, so a task run against another network would target a paymaster
+ * that does not exist there and could send funds to an unrecoverable address.
+ *
+ * @param chain The name of the chain.
+ * @returns The paymaster proxy address for the chain.
+ */
+export const getPaymasterProxyAddress = (chain: string): `0x${string}` => {
+  const envVar = PAYMASTER_PROXY_ENV_VARS[chain];
+  if (!envVar) {
+    const supported = Object.keys(PAYMASTER_PROXY_ENV_VARS).join(", ");
+    throw new Error(`No paymaster proxy configured for chain (${chain}). Supported chains: ${supported}`);
+  }
+
+  const address = process.env[envVar];
+  if (!address) {
+    throw new Error(`${envVar} is not set (required for chain ${chain})`);
+  }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+    throw new Error(`${envVar} is not a valid address: ${address}`);
+  }
+  return address as `0x${string}`;
+};
+
 /**
  * Returns the bigger of two BigInts.
  * @param a The first BigInt.
