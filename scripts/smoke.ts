@@ -30,15 +30,21 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { createServer } from "node:net";
 import { createPublicClient, http, keccak256, hexToBytes, recoverTypedDataAddress, type Hex } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 import { abi as PaymasterAbi } from "../contracts/abi/SignatureVerifyingPaymasterV07.json";
 
 // `npm run smoke` runs from the package root; the child is spawned there too.
 const REPO_ROOT = process.cwd();
 
-/** The chain to drive. A testnet on purpose. */
-const CHAIN = "baseSepolia";
-const CHAIN_ID = 84532;
+/**
+ * The chain to drive. Defaults to the testnet; set SMOKE_CHAIN=base to prove
+ * facilitation on the chain production actually sponsors. Both are safe: every
+ * call is a read or a local signature over a UserOperation never submitted.
+ */
+const CHAIN = process.env.SMOKE_CHAIN === "base" ? "base" : "baseSepolia";
+const CHAIN_ID = CHAIN === "base" ? 8453 : 84532;
+const VIEM_CHAIN = CHAIN === "base" ? base : baseSepolia;
+const RPC_URL = CHAIN === "base" ? process.env.BASE_RPC_URL : process.env.BASE_SEPOLIA_RPC_URL;
 
 /** Standard ERC-4337 v0.7 EntryPoint. The service rejects anything else. */
 const ENTRYPOINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
@@ -51,7 +57,7 @@ const ENTRYPOINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
  * stops matching and this test goes red — which is the point.
  */
 async function paymasterDomainVersion(address: Hex): Promise<string> {
-  const client = createPublicClient({ chain: baseSepolia, transport: http(process.env.BASE_SEPOLIA_RPC_URL) });
+  const client = createPublicClient({ chain: VIEM_CHAIN, transport: http(RPC_URL) });
   const version = await client.readContract({ address, abi: PaymasterAbi, functionName: "VERSION" });
   return String(version);
 }
