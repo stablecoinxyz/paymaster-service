@@ -100,7 +100,13 @@ function skipped(label: string, why: string): void {
 function summarize(): never {
   console.log();
   if (failures > 0) {
-    console.log(`smoke FAILED (${failures})\n--- child output ---\n${childLog.join("")}`);
+    // Only a locally spawned service has output to show. Against a deployment
+    // the logs live wherever it runs, and printing an empty "child output"
+    // heading sends whoever is debugging to the wrong place.
+    const where = childLog.length
+      ? `--- service output ---\n${childLog.join("")}`
+      : `The service was not started by this run, so its logs are wherever it is deployed.`;
+    console.log(`smoke FAILED (${failures})\n${where}`);
     process.exit(1);
   }
   if (notAssessed > 0) {
