@@ -92,6 +92,38 @@ Running the project locally is done by running the following command. The paymas
 npm run start
 ```
 
+## Smoke test
+
+`npm run smoke` answers one question: can the service still facilitate?
+
+It boots `src/index.ts` on a real socket and drives it over HTTP the way the
+proxy does — health routes, the shared-secret gate, an unsupported chain, a
+malformed body, an unsupported EntryPoint — then asks for
+`pm_getPaymasterStubData`, decodes the returned `paymasterData`, and recovers the
+EIP-712 signer from the signature inside it. A green run means that address is
+`TRUSTED_SIGNER`, so the request was parsed, validated and routed, the chain was
+read, and the signing key produced a sponsorship the deployed paymaster would
+accept.
+
+Nothing is broadcast and no funds move. Every call is a read, or a local
+signature over a UserOperation that is never submitted.
+
+```bash
+npm run smoke                      # Base Sepolia, boots its own instance
+SMOKE_CHAIN=base npm run smoke     # Base mainnet
+
+# after a deploy, point it at what is actually serving traffic
+SMOKE_TARGET=https://<host> PAYMASTER_SHARED_SECRET=<secret> npm run smoke
+```
+
+Exit codes are `0` every check passed, `1` a check failed, `2` nothing was
+assessed. The last one is what a missing shared secret produces: the sponsorship
+endpoints answer 401, so the run reports NOT ASSESSED rather than a pass it did
+not earn.
+
+`npm run smoke:selftest` covers the `SMOKE_TARGET` path itself, so that path is
+not first exercised against production.
+
 ## Author
 
 - Eric Tsang [@Ectsang](https://www.github.com/Ectsang)

@@ -8,8 +8,26 @@
     "copy": "copyfiles -f artifacts/contracts/**/*.json contracts/abi/",
     "copy-paymaster": "copyfiles -f artifacts/contracts/SignatureVerifyingPaymasterV07.sol/SignatureVerifyingPaymasterV07.json contracts/abi/",
     "start": "tsx src/index.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "smoke:selftest": "tsx scripts/smoke-selftest.ts",
     "check-radius": "tsx scripts/check-radius-paymaster.ts",
     "fund-radius": "tsx scripts/deposit-radius-paymaster.ts"
+  },
+  "overrides": {
+    "@fastify/ajv-compiler": {
+      "fast-uri": "^2.4.3"
+    },
+    "fast-json-stringify": {
+      "fast-uri": "^2.4.3"
+    },
+    "ajv": {
+      ".": "^8.18.0",
+      "fast-uri": "^3.1.6"
+    },
+    "ws@7": "^7.5.11",
+    "ws@8.13.0": "^8.17.1",
+    "minimatch@3": "^3.1.3",
+    "brace-expansion@1": "^1.1.12"
   },
   "dependencies": {
     "@account-abstraction/contracts": "0.7.0",
@@ -19,7 +37,7 @@
     "@sentry/node": "^9.10.1",
     "copyfiles": "^2.4.1",
     "dotenv": "^16.4.7",
-    "fastify": "^4.26.2",
+    "fastify": "^4.29.1",
     "permissionless": "^0.1.0",
     "tslib": "2.6.2",
     "typescript": "5.4.2",
