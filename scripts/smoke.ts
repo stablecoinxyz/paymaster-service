@@ -16,13 +16,23 @@
  * Nothing is broadcast and no funds move. Every call is read-only or a local
  * signature over an operation that is never submitted.
  *
- * Exits non-zero on the first failure so it can gate a deploy.
+ * Two modes:
  *
- * Usage: npm run smoke
+ *   npm run smoke
+ *       Boots the service locally. The shared secret is generated per run and
+ *       handed to the child, so this never needs the production one.
  *
- * Requires the same .env the service uses, plus nothing else — the shared
- * secret is generated per run and handed to the child, so this never needs the
- * production one.
+ *   SMOKE_TARGET=https://<host> PAYMASTER_SHARED_SECRET=<secret> npm run smoke
+ *       Drives an already-deployed instance instead of spawning one. Run it
+ *       after a release and you know whether the thing actually serving traffic
+ *       can still facilitate.
+ *
+ * Without the shared secret the sponsorship endpoints answer 401, and nothing
+ * about facilitation can be read through that. The run then reports those
+ * checks as NOT ASSESSED and exits 2, rather than passing on the strength of
+ * the health routes alone.
+ *
+ * Exit codes: 0 every check passed, 1 a check failed, 2 nothing was assessed.
  */
 
 import "dotenv/config";
@@ -64,12 +74,41 @@ async function paymasterDomainVersion(address: Hex): Promise<string> {
 
 const BOOT_TIMEOUT_MS = 90_000;
 
+/** Where the locally spawned service listens. Never used in SMOKE_TARGET mode. */
+const LOOPBACK = "127.0.0.1";
+
 let failures = 0;
+let notAssessed = 0;
 const childLog: string[] = [];
 
 function check(label: string, ok: boolean, detail?: string): void {
   console.log(`  ${ok ? "ok  " : "FAIL"}  ${label}${detail ? `  — ${detail}` : ""}`);
   if (!ok) failures++;
+}
+
+/**
+ * Something this run could not read, as opposed to something that failed.
+ * Collapsing the two would let a run with no credentials report a clean bill of
+ * health on the strength of the routes it could reach.
+ */
+function skipped(label: string, why: string): void {
+  console.log(`  ----  ${label}  — NOT ASSESSED: ${why}`);
+  notAssessed++;
+}
+
+/** Prints the verdict and exits. Never returns. */
+function summarize(): never {
+  console.log();
+  if (failures > 0) {
+    console.log(`smoke FAILED (${failures})\n--- child output ---\n${childLog.join("")}`);
+    process.exit(1);
+  }
+  if (notAssessed > 0) {
+    console.log("smoke INCONCLUSIVE — nothing was proved about facilitation, see NOT ASSESSED above");
+    process.exit(2);
+  }
+  console.log("smoke passed — the service still facilitates");
+  process.exit(0);
 }
 
 async function freePort(): Promise<number> {
@@ -117,9 +156,13 @@ function rpc(method: string, params: unknown[]) {
 }
 
 async function main(): Promise<void> {
-  const secret = randomBytes(32).toString("hex");
-  const port = await freePort();
-  const base = `http://127.0.0.1:${port}`;
+  const target = process.env.SMOKE_TARGET?.replace(/\/+$/, "");
+  const port = target ? 0 : await freePort();
+  const base = target ?? `http://${LOOPBACK}:${port}`;
+  // Locally the secret is ours to invent, because we start the service with it.
+  // Against a deployment it has to be the real one, and without it the
+  // sponsorship endpoints are simply closed to us.
+  const secret = target ? process.env.PAYMASTER_SHARED_SECRET : randomBytes(32).toString("hex");
   const paymasterAddress = process.env.PAYMASTER_PROXY_ADDRESS;
   const trustedSigner = process.env.TRUSTED_SIGNER;
 
@@ -127,18 +170,24 @@ async function main(): Promise<void> {
     throw new Error("PAYMASTER_PROXY_ADDRESS and TRUSTED_SIGNER must be set (see .env.example)");
   }
 
-  console.log(`smoke: booting src/index.ts on ${base}, chain ${CHAIN}\n`);
+  console.log(
+    target
+      ? `smoke: driving the deployed service at ${base}, chain ${CHAIN}\n`
+      : `smoke: booting src/index.ts on ${base}, chain ${CHAIN}\n`,
+  );
 
   let child: ChildProcess | undefined;
   try {
-    child = spawn("npx", ["tsx", "src/index.ts"], {
-      cwd: REPO_ROOT,
-      env: { ...process.env, PORT: String(port), PAYMASTER_SHARED_SECRET: secret },
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    child.stdout?.on("data", (d) => childLog.push(String(d)));
-    child.stderr?.on("data", (d) => childLog.push(String(d)));
-    child.on("exit", (code) => childLog.push(`\n[child exited with ${code}]\n`));
+    if (!target) {
+      child = spawn("npx", ["tsx", "src/index.ts"], {
+        cwd: REPO_ROOT,
+        env: { ...process.env, PORT: String(port), PAYMASTER_SHARED_SECRET: secret as string },
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      child.stdout?.on("data", (d) => childLog.push(String(d)));
+      child.stderr?.on("data", (d) => childLog.push(String(d)));
+      child.on("exit", (code) => childLog.push(`\n[child exited with ${code}]\n`));
+    }
 
     await waitForReady(base, Date.now() + BOOT_TIMEOUT_MS);
 
@@ -168,6 +217,17 @@ async function main(): Promise<void> {
     {
       const res = await post({ "x-paymaster-secret": "not-the-secret" }, rpc("pm_getPaymasterStubData", []));
       check("a request with the wrong secret is refused", res.status === 401, `status ${res.status}`);
+    }
+
+    if (!secret) {
+      // Not `return`: that would run the finally and then leave main() before
+      // the summary below, so the process would exit 0 and a run that proved
+      // nothing would read as a pass.
+      console.log("\ninput handling");
+      skipped("everything past the secret gate", "PAYMASTER_SHARED_SECRET is not set for this target");
+      console.log("\nfacilitation — the check this test exists for");
+      skipped(`sponsorship on ${CHAIN}`, "PAYMASTER_SHARED_SECRET is not set for this target");
+      summarize();
     }
 
     const auth = { "x-paymaster-secret": secret };
@@ -263,13 +323,7 @@ async function main(): Promise<void> {
     if (child && child.exitCode === null) child.kill("SIGTERM");
   }
 
-  console.log();
-  if (failures === 0) {
-    console.log("smoke passed — the service still facilitates");
-    process.exit(0);
-  }
-  console.log(`smoke FAILED (${failures})\n--- child output ---\n${childLog.join("")}`);
-  process.exit(1);
+  summarize();
 }
 
 main().catch((err) => {
