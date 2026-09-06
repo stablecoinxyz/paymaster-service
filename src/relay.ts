@@ -409,10 +409,21 @@ export const createSbcRpcHandler = (
     const body = request.body;
     const parsedBody = jsonRpcSchema.safeParse(body);
     if (!parsedBody.success) {
-      throw new RpcError(
+      // Returned rather than thrown. A throw here escapes the try below and
+      // reaches Fastify's default handler as a 500, so a caller sending a
+      // malformed body was told the server had broken. Every other failure in
+      // this handler answers with a JSON-RPC error object; this one now does
+      // too. `id` is unknown at this point, so it is null per JSON-RPC 2.0.
+      const err = new RpcError(
         fromZodError(parsedBody.error).message,
         ValidationErrors.InvalidFields
       );
+      console.error(`RPC handler rejected a malformed request: ${err.message}`);
+      return {
+        jsonrpc: "2.0",
+        id: null,
+        error: toClientError(err),
+      };
     }
 
     try {
